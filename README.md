@@ -60,12 +60,14 @@ The primary user interaction model is conversational, driven by AI agents orches
     * **Key PoC Deliverables:** Basic voice pattern capture, basic research automation & fact verification, basic script generation in creator's voice, minimal interactive frontend/agent interface.
 * **Next Phases:**
     * **Early MVP:** Stabilize PoC flow, deploy to cloud, add foundational CI/CD and basic observability (logging, error tracking).
-    * **MVP:** Deliver core value prop reliably with enhanced AI quality (fine-tuning, multi-source research), improved usability, full observability integration, and readiness for initial paying customers.
-* **Remaining Decisions / Active Design Areas:** Specific PaaS/DB/Redis provider selection, final data schema details, detailed data ingestion pipelines, specific Haystack pipeline implementations, detailed observability configuration (dashboards/alerts), advanced caching strategies.
+    * **MVP:** Deliver core value prop reliably with enhanced AI quality (fine-tuning, multi-source research), improved usability, full observability integration, and readiness for initial paying customers. Replace PoC polling with real-time status updates (WebSockets/SSE).
+* **Remaining Decisions / Active Design Areas:** Specific PaaS/DB/Redis provider selection, final data schema details, detailed data ingestion pipelines, specific Haystack pipeline implementations, detailed observability configuration (dashboards/alerts), advanced caching strategies, **Workflow Orchestration Strategy (Post-MVP)**.
 
 ## 5. Project Structure (Monorepo)
 
 This project uses a monorepo to manage the frontend, backend, and configurations together, simplifying local development while maintaining separation.
+
+*(Structure diagram retained from previous version)*
 
 cp-prototype/
 ├── .github/                  # CI/CD Automation (e.g., GitHub Actions)
@@ -212,6 +214,7 @@ Architecture choices prioritize developer velocity (solopreneur focus), low oper
 * Prioritize creator voice authenticity.
 * Async-first design.
 * Modularity & Rapid Iteration.
+* **Design for Idempotency:** Especially for background tasks, ensure operations can be safely retried.
 
 ### 6.c. Key Patterns
 
@@ -222,26 +225,31 @@ Architecture choices prioritize developer velocity (solopreneur focus), low oper
 
 ### 6.d. API vs. Worker Design Strategy (PoC)
 
-This strategy outlines the division of logic between the synchronous API Process (FastAPI) and the asynchronous Worker Process (SAQ) for the PoC.
+This strategy outlines the division of logic between the synchronous API Process (FastAPI) and the asynchronous Worker Process (SAQ) for the PoC, acknowledging areas needing evolution.
 
 * **Guiding Principles:** API Responsiveness (< 500ms target), Background Processing for long tasks (> 500ms, I/O, CPU-heavy), Independent Scalability, Reliability via background retries, Maintainability via shared code.
 * **Core Responsibilities:**
-    * **API (FastAPI):** Handles HTTP requests, quick validation/auth, simple/fast DB ops, *triggers* background tasks, provides *polling endpoints* for job status/results.
-    * **Worker (SAQ):** Executes longer tasks (>500ms), I/O-bound calls (LLM Gateway, external APIs), CPU-intensive work, tasks needing retries. Updates status/results in DB.
+    * **API (FastAPI):** Handles HTTP requests, quick validation/auth, simple/fast DB ops, *triggers* background tasks, provides *polling endpoints* for job status/results (PoC limitation).
+    * **Worker (SAQ):** Executes longer tasks (>500ms), I/O-bound calls (LLM Gateway, external APIs), CPU-intensive work, tasks needing retries. Updates status/results in DB. Must be designed for **idempotency** where possible.
 * **Communication Patterns (PoC Scope):**
     1.  **Triggering:** API validates, generates `job_id`, calls `await queue.enqueue("task_name", job_id=job_id, ...)`, returns `job_id` (e.g., 202 Accepted).
     2.  **Status Reporting:** Worker updates job status (`PROCESSING`, `COMPLETED`, `FAILED`) and results in DB, keyed by `job_id`.
-    3.  **Status Retrieval:** Client polls API endpoint (`GET /jobs/{job_id}/status`), which reads status/results from DB.
+    3.  **Status Retrieval (PoC Limitation):** Client **polls** API endpoint (`GET /jobs/{job_id}/status`), which reads status/results from DB. (*Note: This polling approach is for PoC simplicity and is expected to be replaced by real-time updates like WebSockets/SSE in MVP for better UX and efficiency.*)
 * **Shared Code Strategy:**
     * Reusable logic (business rules, DB interactions, clients) in `app/features/.../service.py` or `app/shared/`.
     * Services accept dependencies (e.g., DB session) explicitly, usable by both API (via `Depends`) and Worker (via explicit setup/context). Avoid FastAPI-specific objects in shared services.
-* **Error Handling (PoC):**
-    * **Worker:** Use `try...except`, log errors, update job status to `FAILED`. Use basic SAQ retries for transient issues.
+* **Error Handling (PoC Scope):**
+    * **Worker:** Use `try...except`, log errors thoroughly, update job status to `FAILED`. Use basic SAQ retries for transient issues.
     * **API:** Return standard HTTP 4xx/5xx errors with JSON bodies.
 * **Application to Key PoC Features:**
     * **Worker Tasks:** Content Ingestion, Creator DNA Analysis, Research Topic, Verify Fact, Generate Script Section.
     * **API Tasks:** Auth, Agent Interaction (triggers workers), Job Status Endpoint.
-* **Future Considerations (MVP+):** Polling likely replaced by WebSockets/SSE; Distributed Tracing (OTel); Advanced worker error handling/concurrency.
+* **Future Considerations & Challenges (MVP+):**
+    * **Real-time Updates:** Replace PoC polling with WebSockets/SSE.
+    * **Workflow Orchestration:** **CRITICAL CHALLENGE.** Managing complex, multi-step, conditional background processes (required for advanced Post-MVP features) will necessitate a robust orchestration strategy beyond simple SAQ enqueueing. Options include dedicated workflow engines (Temporal, Prefect, etc.) or custom state machines. This requires dedicated design effort post-PoC (See Section 4).
+    * **Advanced Error Handling:** Implement dead-letter queues, more sophisticated retry logic, and potentially compensation logic for multi-step failures.
+    * **Observability:** Implement distributed tracing (OpenTelemetry) to track requests across API -> Queue -> Worker boundaries.
+    * **Resource Management:** More granular concurrency controls might be needed for resource-intensive tasks.
 
 ### 6.e. Observability Strategy (MVP Target)
 
