@@ -16,4 +16,4 @@ async def health_check() -> HealthResponse:
     Health check endpoint to verify API is running.
     Returns a simple response with status "ok".
     """
-    return HealthResponse(status="HAPPY")
+    return HealthResponse(status="ok")
