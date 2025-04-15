@@ -1,0 +1,14 @@
+# Configuration file for Ruff (Python Linter and Formatter)
+#
+# This file configures the behavior of the Ruff tool.
+#
+# Key Sections:
+# - `line-length`: Maximum line length allowed.
+# - `select` / `ignore`: Rules codes to enable or disable (e.g., "E" for pycodestyle errors, "F" for pyflakes).
+# - `target-version`: Python version to target for compatibility checks.
+# - [format]: Configuration specific to the formatter.
+# - [lint]: Configuration specific to the linter.
+# - [lint.per-file-ignores]: Ignore specific rules for specific files/directories (e.g., `__init__.py`).
+#
+# Configure linting rules, formatting preferences, and target Python version here.
+# This helps ensure consistent code style and catch potential errors early.

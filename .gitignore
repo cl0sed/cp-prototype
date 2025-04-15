@@ -1,0 +1,135 @@
+# .gitignore
+
+# --- Python ---
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+# Usually ignored
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Ruff cache
+.ruff_cache/
+
+# Mypy cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# --- Virtual Environment ---
+# Using uv, the default is .venv
+.venv/
+venv/
+env/
+ENV/
+# If you use other venv management tools:
+.direnv/
+.envrc
+
+# --- Secrets ---
+# Ignore .env files as they contain secrets
+.env
+*.env.* # Ignore variations like .env.local, .env.dev
+
+# --- Databases ---
+# Ignore local SQLite databases if used for testing/dev
+*.sqlite3
+*.db
+
+# --- Alembic ---
+# Usually, alembic.ini and generated version scripts SHOULD be committed.
+# Add specific files here if you have local-only Alembic configurations or logs.
+
+# --- IDEs ---
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains / PyCharm
+.idea/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# --- OS Generated Files ---
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# --- Docker ---
+# Ignore docker-compose override files which often contain local adjustments/secrets
+docker-compose.override.yml
+docker-compose.*.yml
+
+# --- Other ---
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp

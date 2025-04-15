@@ -1,0 +1,157 @@
+# .pre-commit-config.yaml
+# --- v3 - Comprehensive, Less Redundant ---
+
+# Optional: Set default Python version used by hooks system-wide if needed
+# default_language_version:
+#   python: python3.11
+
+# Optional: Set default stages if most hooks should run on something other than 'commit'
+# default_stages: [commit, push]
+
+# --- Hook Repositories ---
+repos:
+  # ===================================================================
+  # 1. Foundational Checks (Fast, Universal)
+  #    - File formatting, syntax, merge conflicts, large files, secrets
+  # ===================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0 # Pinned to specific tag for reproducibility
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=1024"] # Limit: 1MB
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-yaml
+        args: ["--unsafe"] # Allow more complex YAML if needed, otherwise remove args
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+      # Python specific basic checks:
+      - id: check-ast # Check python files parse as valid AST
+        files: ^backend/.*\.(py|pyw)$
+      - id: check-docstring-first # Check code isn't placed before docstrings
+        files: ^backend/.*\.(py|pyw)$
+      - id: debug-statements # Check for pdb, breakpoint()
+        files: ^backend/.*\.(py|pyw)$
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0 # Pinned to specific tag
+    hooks:
+      - id: detect-secrets
+        # args: ["--baseline", ".secrets.baseline"]
+        exclude: (\.env\.example|\.env\.staging\.example|\.env\.production\.example|\.secrets\.baseline)$
+
+  # ===================================================================
+  # 2. Python Backend - Ruff (Primary Linter & Formatter)
+  #    - Replaces flake8, isort, pydocstyle, pyupgrade, and often black.
+  # ===================================================================
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.5 # Pinned to specific tag (match dev env)
+    hooks:
+      - id: ruff # Linter + Fixer (ensure isort rules are enabled in ruff config)
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^backend/
+      - id: ruff-format # Formatter (Black compatible)
+        files: ^backend/
+
+  # ===================================================================
+  # 3. Python Backend - Static Analysis (Types & Security)
+  # ===================================================================
+  # MyPy for Static Type Checking (Requires 'mypy' + stubs in dev dependencies)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0 # Pinned to specific tag
+    hooks:
+      - id: mypy
+        files: ^backend/app/ # Target main source code
+        # Exclude tests, migrations if needed, or configure in mypy config
+        exclude: ^backend/(tests/|db/migrations/|worker/)
+        # Use project's venv - assumes pre-commit is run where .venv is active or accessible
+        language: python # Use 'python' if you need pre-commit to manage a separate venv for the hook
+        entry: mypy
+        require_serial: true
+        additional_dependencies: [
+            # Add ALL necessary types-* and stubs packages here
+            "types-redis>=4.6.0.20241004", # Example pinned version
+            "types-python-jose>=3.4.0.20250224", # Example pinned version
+            "sqlalchemy-stubs>=0.4", # Example version
+            # Add stubs for other libs like pydantic-settings if available/needed
+        ]
+
+  # Bandit for Security Analysis (Requires 'bandit' in dev dependencies)
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.3 # Pinned to specific tag
+    hooks:
+      - id: bandit
+        args: ["-c", "backend/pyproject.toml", "-r", "-lll"] # Use config, recursive, lower levels
+        files: ^backend/app/.*\.py$
+        exclude: ^backend/app/db/migrations/.*\.py$ # Often exclude migrations
+
+  # ===================================================================
+  # 4. Optional Python Checks (pygrep-hooks - Reduced based on Ruff coverage)
+  #    - Keep checks not typically covered by Ruff's default rules.
+  # ===================================================================
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0 # Pinned to specific tag
+    hooks:
+      # Ruff handles most style checks (noqa specifics, type annotations usage). Keep checks for:
+      - id: python-check-mock-methods # Common unittest.mock mistakes
+        files: ^backend/tests/ # Typically only relevant in tests
+      - id: python-no-eval # Prevent use of eval()
+        files: ^backend/
+      # Decide if you want to restrict logging levels (e.g., prevent .debug in commits)
+      # - id: python-no-log-debug
+      #   files: ^backend/
+
+  # ===================================================================
+  # 5. Frontend - Formatting & Linting (Requires Node.js setup)
+  # ===================================================================
+  # - repo: https://github.com/pre-commit/mirrors-prettier
+  #   rev: v4.0.0-alpha.8 # Pinned (or align with frontend setup)
+  #   hooks:
+  #     - id: prettier
+  #       files: ^frontend/.*\.(js|ts|svelte|css|html|json|yaml|yml|md)$ # Target specific frontend files
+  #       # Assumes prettier config is auto-detected in frontend/
+
+  # Optional: ESLint (If used and configured in frontend/)
+  # - repo: https://github.com/pre-commit/mirrors-eslint
+  #   rev: v9.4.0 # Pinned (check compatibility)
+  #   hooks:
+  #     - id: eslint
+  #       files: ^frontend/.*\.(js|ts|svelte)$
+  #       additional_dependencies: ["eslint-plugin-svelte@latest"] # Example
+
+  # ===================================================================
+  # 6. Configuration File Formatting (TOML)
+  # ===================================================================
+  - repo: https://github.com/ComPWA/taplo-pre-commit
+    rev: v0.9.3 # Pinned to specific tag
+    hooks:
+      - id: taplo-format
+      - id: taplo-lint
+
+  # ===================================================================
+  # 7. Dockerfile Linting
+  # ===================================================================
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0 # Pinned to specific tag
+    hooks:
+      - id: hadolint # Lints Dockerfiles
+
+  # ===================================================================
+  # 8. Spell/Typo Checking (Useful addition)
+  # ===================================================================
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1 # Pinned to specific tag
+    hooks:
+      - id: codespell
+        args: [
+            "--ignore-words-list", "uint,ned,...", # Add project-specific words to ignore
+            "--skip", "*.json,*.lock,*.css,*.html,*.svg,*.min.js,./frontend/package-lock.json", # Skip files likely to have "errors"
+            # Optional: Specify dictionary file if needed
+            # "--dictionary", "./path/to/dictionary.txt"
+          ]
+        # Exclude generated files or vendor directories if any
+        # exclude: ^backend/vendor/

@@ -1,0 +1,65 @@
+# pyproject.toml
+
+[project]
+name = "ai_video_platform"
+version = "0.1.0"
+description = "AI platform for accelerating video pre-production."
+authors = [{ name = "Your Name", email = "your@email.com" }]
+requires-python = ">=3.11" # Set to 3.11 based on previous decision
+license = { text = "MIT" }
+readme = "README.md"
+dependencies = [
+  "fastapi>=0.115.0,<0.116.0",
+  "uvicorn[standard]>=0.34.0,<0.35.0",
+  "haystack-ai>=2.0.0,<3.0.0",
+  "psycopg[binary]>=3.2.0,<3.3.0",
+  "sqlalchemy>=2.0.35,<2.1.0",
+  "pgvector>=0.4.0,<0.5.0",
+  "alembic>=1.15.1,<1.16.0",
+  "redis>=5.2.0,<5.3.0",
+  "pydantic-settings>=2.8.0,<2.9.0",
+  "python-jose[cryptography]>=3.4.0,<3.5.0",
+  "opentelemetry-api>=1.31.0,<1.33.0",
+  "opentelemetry-sdk>=1.31.0,<1.33.0",
+  "opentelemetry-exporter-otlp>=1.31.0,<1.33.0",
+  "portkey-ai>=1.11.0,<1.12.0",
+  "pre-commit>=4.0.0,<4.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.1.1,<8.2.0",
+  "pytest-asyncio>=0.23.6,<0.24.0",
+  "ruff>=0.3.5,<0.4.0",
+  "black>=24.3.0,<25.0.0",
+  "isort>=5.13.2,<5.14.0",
+  "saq>=0.14.0,<0.15.0",
+  # "python-dotenv>=1.0.0,<2.0.0", # Optional: Uncomment to add
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311" # Match requires-python
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "C", "B"]
+ignore = []
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.black]
+line-length = 88
+target-version = ['py311'] # Match requires-python
+
+[tool.isort]
+profile = "black"
+line_length = 88

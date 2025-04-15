@@ -1,0 +1,114 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17 # Use a Postgres image with pgvector installed
+    container_name: db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app_db} # Use environment variable or default
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-app_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine # Use a recent Redis image
+    container_name: redis
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # api:
+  #   build:
+  #     context: . # Assuming Dockerfile for backend is in the root or adjust path (e.g., ./backend)
+  #     dockerfile: Dockerfile # Or specify your backend Dockerfile name
+  #   container_name: backend-api
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-app_db}
+  #     - REDIS_URL=redis://redis:6379/0
+  #     - FRONTEND_URL=http://localhost:5173
+  #   volumes:
+  #     - ./backend:/app # Mount your backend source code (adjust path if needed)
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - app_network
+  #   command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+  #   restart: unless-stopped
+
+  # worker:
+  #   build:
+  #     context: . # Assuming same Dockerfile as API or adjust path (e.g., ./backend)
+  #     dockerfile: Dockerfile # Or specify your backend Dockerfile name
+  #   container_name: saq_worker
+  #   env_file:
+  #     - .env # Load environment variables from .env file
+  #   environment:
+  #     # Ensure these are set in your .env file or provide defaults here
+  #     - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-app_db}
+  #     - REDIS_URL=redis://redis:6379/0
+  #     # Add other necessary backend environment variables
+  #   volumes:
+  #     - ./backend:/app # Mount your backend source code (adjust path if needed)
+  #   depends_on: # Service dependencies ensure startup order
+  #     db:
+  #       condition: service_healthy # Optional: Waits for db healthcheck
+  #     redis:
+  #       condition: service_healthy # Optional: Waits for redis healthcheck
+  #   networks:
+  #     - app_network
+  #   # *** IMPORTANT: Replace with your actual SAQ worker command ***
+  #   # Example: saq app.worker_settings.queue app.worker_settings --web # (The --web flag is optional, for SAQ's web UI)
+  #   command: saq app.worker_settings.queue app.worker_settings
+  #   restart: unless-stopped
+
+  # frontend:
+  #   build:
+  #     context: ./frontend # Assuming frontend code and Dockerfile are in ./frontend
+  #     dockerfile: Dockerfile # Or specify your frontend Dockerfile name
+  #   container_name: frontend
+  #   volumes:
+  #     - ./frontend:/app # Mount frontend source code
+  #     - /app/node_modules # Avoid overwriting node_modules from host
+  #   ports:
+  #     - "5173:5173"
+  #   environment:
+  #     - VITE_API_URL=http://localhost:8000
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - app_network
+  #   command: npm run dev -- --host
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  app_network:
+    driver: bridge
