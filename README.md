@@ -1,23 +1,76 @@
 # AI Video Creation Platform - Project README
 
+*(As of: April 15, 2025)*
+
+This README provides a central hub for understanding the project's goals, structure, architecture, development workflow, and current status. It aims to be a self-contained context source for team members and AI agents working on the project.
+
 ## 1. High-Level Overview
 
-This project is an AI-powered platform designed to drastically reduce pre-production time for educational content creators, specifically targeting "Accelerating Creators" (often with 25K-50K subscribers) who face bottlenecks in research and scripting.
+This project is an AI-powered platform designed to drastically reduce pre-production time (aiming for 90% reduction) for educational content creators by automating research, structuring, and scripting while preserving the creator's unique voice and teaching style[cite: 19, 69]. It addresses critical bottlenecks that lead to creator burnout and limit sustainable channel growth[cite: 18, 68].
 
-**Core Value Proposition:**
+The primary user interaction model is conversational, driven by AI agents orchestrated via the Haystack framework[cite: 2], guiding creators through a human-in-the-loop pre-production pipeline[cite: 20].
 
-* **90% Pre-production Time Reduction:** Automate significant portions of research, structuring, and scripting.
-* **Creator Voice Preservation:** Maintain the creator's unique linguistic style and authenticity using "Creator DNA" technology.
-* **Sustainable Scaling:** Enable creators to increase content output without burnout.
+## 2. Problem Space & Target Audience
 
-The platform guides creators through a pre-production pipeline, leveraging AI for heavy lifting while keeping the creator in control of key decisions. The primary user interaction model is conversational, driven by AI agents orchestrated via the Haystack framework.
+* **Problem:** Educational creators invest significant time (10-30 hours/video) in pre-production, with research/scripting being the major bottleneck (60-70%)[cite: 18, 68]. This limits output, creates stress, and risks burnout[cite: 25]. Existing AI tools often lack the ability to maintain the creator's unique voice and teaching style, a critical factor for audience connection[cite: 25, 68].
+* **Primary Target Audience:** "Accelerating Creators" [cite: 20] - typically solo creators with 25K-50K subscribers, generating \$30K-\$75K annually[cite: 20, 41]. They are transitioning from passion projects to businesses, feeling the conflict between creative goals and scaling demands[cite: 21, 69], and are highly receptive to solutions that save time while preserving authenticity[cite: 22].
+* **Key Pain Points:** Time-Quality Paradox (scaling vs. quality)[cite: 25, 44], Creator Burnout[cite: 25, 44], Voice & Authenticity Concerns with AI[cite: 25, 44], Structuring complex educational content effectively[cite: 26, 44].
 
-## 2. Project Structure (Monorepo)
+## 3. Vision & Core Features
 
-This project uses a monorepo structure to manage the frontend, backend (API & Worker), and related configurations together. This simplifies local development and dependency management while maintaining clear separation for potential future splitting.
+* **Vision:** To be the essential pre-production partner for educational creators, enabling them to "Create more without burnout - reclaim your creative passion"[cite: 34].
+* **Core Value Proposition:**
+    * **Time Reduction:** Transform 15-30 hours of research/scripting into 2-3 hours of focused effort[cite: 69].
+    * **Voice Preservation ("Creator DNA"):** Analyze existing content to capture and replicate unique linguistic patterns, terminology, pacing, and teaching style, avoiding generic AI output[cite: 28, 36, 49, 70].
+    * **Sustainable Scaling:** Allow creators to potentially double content output without increasing stress[cite: 25, 69].
+    * **Educational Effectiveness:** Help optimize content structure and clarity for better learning outcomes and viewer retention[cite: 26, 55, 70].
+* **Key Feature Modules & Phased Rollout:**
+    * **Module 1: Creator Voice & Identity** [cite: 48]
+        * **Creator DNA System:** Captures linguistic patterns/style from creator content. *(PoC: Basic pattern capture[cite: 49, 64]; MVP: Style fine-tuning controls [cite: 49, 64])*
+        * **Personal Stories Database:** Stores and retrieves creator anecdotes for integration. *(Post-MVP [cite: 49])*
+    * **Module 2: Strategic Content Intelligence** [cite: 50]
+        * **Idea Validation:** Assesses topic viability and potential performance. *(MVP: Basic viability[cite: 51, 64]; Post-MVP: Performance prediction [cite: 51, 65])*
+        * **Knowledge Gap Detector:** Identifies underserved areas in the creator's content or niche. *(Post-MVP [cite: 51])*
+    * **Module 3: Research & Knowledge Management** [cite: 52]
+        * **Deep Research Automation:** Gathers and synthesizes information from multiple sources. *(PoC: Basic info gathering[cite: 53, 64]; MVP: Multi-source synthesis [cite: 53, 64])*
+        * **Factual Authority Verification:** Checks information accuracy against sources. *(PoC: Basic verification[cite: 53, 64]; MVP: Source credibility assessment [cite: 53, 64])*
+        * **Audience Research:** Analyzes audience demographics, interests, and questions. *(PoC: Basic profiling[cite: 53, 64]; MVP: Enhanced mapping, pain points [cite: 53, 64])*
+    * **Module 4: Content Production Pipeline** [cite: 54]
+        * **Structure Optimization:** Suggests effective content outlines based on educational frameworks. *(PoC: Basic organization[cite: 55, 64]; MVP: Educational framework templates [cite: 55, 64])*
+        * **Script Coherence Engine:** Ensures logical flow and conceptual connections. *(PoC: Basic flow check[cite: 55, 64]; MVP: Conceptual connection tools [cite: 55, 64])*
+        * **Concept Simplification Engine:** Helps explain complex topics clearly. *(PoC: Basic explanation tools[cite: 55, 64]; MVP: Multiple explanation approaches [cite: 55, 64])*
+        * **Hook Development:** Generates engaging intro hooks. *(PoC: Basic options[cite: 56, 64]; MVP: Enhanced options/prediction [cite: 56, 64])*
+        * **Script Generation:** Creates full scripts in the creator's voice. *(PoC: Basic generation[cite: 56, 64]; MVP: Enhanced personalization, dynamic examples [cite: 56, 64])*
+        * **Content Safety:** Checks for compliance and brand safety. *(PoC: Basic policy check[cite: 56, 64]; MVP: Enhanced detection [cite: 56, 64])*
+    * **Module 5: Content Distribution & Monetization** [cite: 57]
+        * **Content Repurposing:** Adapts video scripts for other formats (shorts, blogs). *(Post-MVP [cite: 58])*
+        * **Monetization Strategy:** Suggests relevant CTAs based on content. *(Post-MVP [cite: 58])*
+    * **Module 6: Creator Workflow System** [cite: 59]
+        * **Streaming Save / Version Management:** Preserves work continuously and allows reverting. *(PoC: Critical point saves, basic version retrieval[cite: 60, 64]; MVP: Continuous save, enhanced version control [cite: 60, 64])*
+        * **Feedback System:** Allows creators to provide feedback at any stage to improve AI outputs. *(PoC: Basic correction system[cite: 60, 64]; MVP: Preference tracking [cite: 60, 64])*
+    * **Module 7: Platform Foundation** [cite: 61]
+        * **Processing Infrastructure:** Manages underlying compute for AI tasks. *(PoC/MVP [cite: 62])*
+        * **Data Security:** Ensures protection of creator data and content. *(PoC/MVP [cite: 62])*
 
-```
-your-project-root/
+## 4. Roadmap & Current Status
+
+* **Phased Approach:** Development follows an iterative plan: **PoC -> Early MVP -> MVP -> Post-MVP**[cite: 74]. This allows for validation and refinement at each stage.
+* **Current Phase:** **Proof of Concept (PoC)** *(Target Completion: See internal plan)* [cite: 76]
+    * **Goal:** Validate the core technical feasibility of the research-to-script flow using basic versions of key features (DNA capture, research, verification, structuring, scripting) via a conversational agent (Haystack) interacting with an LLM Gateway (Portkey)[cite: 76, 83, 84]. Establish core backend/frontend architecture patterns[cite: 77].
+    * **Key PoC Deliverables:** Basic voice pattern capture, basic research automation & fact verification, basic script generation in creator's voice, minimal interactive frontend/agent interface[cite: 64, 76, 84].
+* **Next Phases:**
+    * **Early MVP:** Stabilize PoC flow, deploy to cloud, add foundational CI/CD and basic observability (logging, error tracking)[cite: 86, 88, 90].
+    * **MVP:** Deliver core value prop reliably with enhanced AI quality (fine-tuning, multi-source research), improved usability, full observability integration, and readiness for initial paying customers[cite: 91, 93, 95].
+* **Remaining Decisions / Active Design Areas:** Specific PaaS/DB/Redis provider selection, final data schema details, detailed data ingestion pipelines, specific Haystack pipeline implementations, detailed observability configuration (dashboards/alerts), advanced caching strategies[cite: 7, 8, 9, 10, 11, 12, 13, 16].
+
+## 5. Project Structure (Monorepo)
+
+This project uses a monorepo to manage the frontend, backend, and configurations together, simplifying local development while maintaining separation.
+
+*(Structure diagram retained from previous version)*
+
+```plaintext
+cp-prototype/
 ├── .github/                  # CI/CD Automation (e.g., GitHub Actions)
 │   └── workflows/
 │       ├── ci-backend.yml
@@ -135,73 +188,38 @@ your-project-root/
 └── scripts/                  # Optional: Helper scripts (e.g., db reset, run linters)
     └── .gitkeep
 ```
+* **`backend/`:** Python API (FastAPI) & Background Task Worker (SAQ). See `backend/README.md`.
+* **`frontend/`:** SvelteKit User Interface. See `frontend/README.md`.
+* **Root:** Shared configurations, local development setup (`docker-compose.yml`), CI/CD workflows.
 
-* **`backend/`:** Contains all Python code for the API (FastAPI) and background tasks (SAQ Worker). It's structured internally by features (`backend/app/features/`). See `backend/README.md`.
-* **`frontend/`:** Contains the SvelteKit user interface code. See `frontend/README.md`.
-* **Root:** Contains shared configurations, local development setup (`docker-compose.yml`), CI/CD workflows, and this main README.
+## 6. Architecture
 
-## 3. Key Architecture Decisions
+Architecture choices prioritize developer velocity (solopreneur focus), low operational overhead ("Low-Ops"), cost-efficient scaling, and creator voice authenticity[cite: 7, 68].
 
-The architecture prioritizes developer velocity (as a solopreneur), low operational overhead ("Low-Ops"), scalability, and creator voice authenticity. Key choices include:
-
-* **Language/Framework:** Python with FastAPI (Backend), Svelte/SvelteKit (Frontend).
-* **AI Orchestration:** Haystack Framework (v2+) for building AI pipelines and agents.
-* **Database:** Managed PostgreSQL with the `pgvector` extension for relational and vector data storage. Alembic is used for database migrations.
-* **Background Tasks:** SAQ (Simple Async Queue) with a Managed Redis backend for asynchronous job processing.
-* **Hosting:** Container-based PaaS (e.g., Google Cloud Run, AWS App Runner, Render) for simplified deployment and scaling.
-* **Backend Deployment Strategy:** A **single backend Docker image** is built containing code for both the API and Worker. Separate container instances are run from this image using different entry commands (Uvicorn for API, SAQ for Worker) specified in the deployment configuration (e.g., `docker-compose.yml`). This ensures consistency and simplifies the build process.
-* **Observability:** OpenTelemetry for instrumentation, exporting data to a managed stack (planned: Grafana Cloud for Infra/Logs/Traces, Sentry for App Errors/APM, PostHog for Product Analytics). LLM interactions monitored via an LLM Gateway (e.g., Portkey).
-* **Design Patterns:** Async-first design, Dependency Injection (via FastAPI).
-* **Development:** Docker Compose for managing local development services (Postgres, Redis, API, Worker, Frontend). Code quality enforced via pre-commit hooks and linters/formatters.
-
-*(Refer to `Architecture Decisions Summary (Markdown).pdf` [cite: 1, 2, 3, 4, 5, 6, 7] for more detailed justifications)*
-
-## 4. Local Development Setup & Running
-
-This provides a very brief overview. **See `backend/README.md` and `frontend/README.md` for detailed setup, testing, and command instructions.**
-
-**Prerequisites:**
-
-* Docker & Docker Compose
-* Git
-* Python environment management (e.g., Poetry or PDM) - for backend tools/hooks
-* Node.js & package manager (npm/yarn/pnpm) - for frontend tools/hooks
-
-**Basic Steps:**
-
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd <repository-directory>
-    ```
-2.  **Configure Environment:**
-    * Copy `.env.example` to `.env`.
-    * Fill in necessary local configuration values in `.env` (database credentials, placeholders for API keys, etc.). **CRITICAL: Never commit your actual `.env` file to Git!**
-3.  **Build & Start Services:**
-    ```bash
-    docker-compose up --build -d
-    ```
-    * This command builds the Docker images (if they don't exist or Dockerfiles changed) and starts all services defined in `docker-compose.yml` (db, redis, api, worker, frontend) in the background.
-4.  **Access Services (Default Ports):**
-    * Frontend: `http://localhost:5173`
-    * Backend API: `http://localhost:8000`
-5.  **Database Migrations:**
-    * **CRITICAL:** If you pull changes that include database schema modifications (`backend/db/migrations/`), you MUST apply them *before* running the application code that depends on them.
-    * Run the migration command (detailed in `backend/README.md`), typically:
-        ```bash
-        docker-compose exec backend alembic upgrade head
-        ```
-6.  **Stopping Services:**
-    ```bash
-    docker-compose down
-    ```
-
-**Important Considerations:**
-
-* **Configuration:** Local development uses `.env`. Staging and Production environments load configuration from environment variables (set via PaaS interface or IaC) which are read by `backend/app/config.py`.
-* **Secrets Management:** **CRITICAL:** For Staging/Production, sensitive data (API keys, database passwords) **MUST** be stored securely using a secrets management system (e.g., AWS Secrets Manager, Google Secret Manager, HashiCorp Vault) and injected as environment variables at runtime, *not* stored in `.env` files or code.
-* **Logging:** Application logging behaviour (levels, formats) is configured in `backend/app/logging_config.py`. Check container logs via `docker-compose logs <service_name>`. Basic logging will be supplemented by Sentry and Grafana Cloud post-PoC[cite: 5, 90, 95].
-* **Error Handling:** Backend errors are caught and transformed into standard API error responses. The frontend's API client (`frontend/src/lib/services/apiClient.js`) should handle these responses gracefully. Sentry (once integrated) will track backend exceptions[cite: 5].
-* **Frontend Build:** The local dev server (`npm run dev`) provides hot reloading. For production, the `frontend/Dockerfile` typically creates an optimized static build served efficiently (e.g., via Nginx or PaaS static hosting).
-
-*(Refer to the README files inside the `backend/` and `frontend/` directories for detailed development workflows.)*
+* **Core Technology Stack**[cite: 2, 3, 4, 5]:
+    * Backend Language/Framework: Python / FastAPI
+    * AI Orchestration: Haystack Framework (v2+)
+    * Frontend Framework: Svelte / SvelteKit
+    * Database: Managed PostgreSQL + `pgvector` extension (for relational & vector data)
+    * DB Migrations: Alembic
+    * Background Tasks: SAQ (Simple Async Queue) library
+    * Task Queue Broker: Managed Redis
+    * Hosting: Container-based PaaS (e.g., Cloud Run, App Runner, Render)
+    * LLM Interaction (PoC): Via managed LLM Gateway (Portkey) [cite: 83] for abstraction, monitoring, caching. Architecture allows for future self-hosted/fine-tuned models.
+* **Guiding Principles**[cite: 6, 7]:
+    * Minimize direct infrastructure operation ("Low-Ops").
+    * Minimize vendor lock-in (prefer managed open-source/standards where feasible).
+    * Prioritize creator voice authenticity[cite: 68].
+    * Async-first design.
+    * Modularity & Rapid Iteration.
+* **Key Patterns**[cite: 6]:
+    * Async-first design (Python `async`/`await`).
+    * Dependency Injection (FastAPI `Depends`, SAQ context/hooks).
+    * Single Backend Docker Image: Builds API + Worker code; run with different commands.
+    * Conversational Agent primary interface via Haystack Tool/Function calling.
+* **Observability Strategy (MVP Target)**[cite: 5, 95]:
+    * Instrumentation: OpenTelemetry SDK (standard for traces, metrics, logs).
+    * Backend - Grafana Cloud: Centralized Logs (Loki), Metrics (Mimir), Traces (Tempo). Infrastructure & System view.
+    * Backend - Sentry: Application Error Tracking & Performance Monitoring (APM). Application Code view.
+    * Frontend/Backend - PostHog: Product Analytics, User Behavior Tracking, Feature Flags, Session Replay. User Interaction & Product view.
+    * Supplemented by LLM Gateway (Portkey) for monitoring LLM calls, costs, latency, prompts[cite: 85, 90, 92].

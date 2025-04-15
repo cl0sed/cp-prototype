@@ -12,3 +12,11 @@ Avoid putting database models (SQLAlchemy) or complex internal business objects
 directly in API schemas. Keep them focused on the API contract.
 Use distinct schemas for request input vs. response output if they differ significantly.
 """
+
+from pydantic import BaseModel
+
+
+class HealthResponse(BaseModel):
+    """Response model for the health check endpoint."""
+
+    status: str
