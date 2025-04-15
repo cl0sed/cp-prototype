@@ -69,6 +69,7 @@ This project uses a monorepo to manage the frontend, backend, and configurations
 
 *(Structure diagram retained from previous version)*
 
+```plaintext
 cp-prototype/
 ├── .github/                  # CI/CD Automation (e.g., GitHub Actions)
 │   └── workflows/
@@ -186,6 +187,7 @@ cp-prototype/
 │
 └── scripts/                  # Optional: Helper scripts (e.g., db reset, run linters)
     └── .gitkeep
+```
 
 * **`backend/`:** Python API (FastAPI) & Background Task Worker (SAQ). See `backend/README.md`.
 * **`frontend/`:** SvelteKit User Interface. See `frontend/README.md`.

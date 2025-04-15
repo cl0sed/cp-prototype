@@ -1,0 +1,23 @@
+{
+  "name": "frontend",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Frontend for the AI Video Creation Platform using SvelteKit",
+  "comment": "This file defines project metadata, scripts, and dependencies (Node.js/npm).",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "lint": "prettier --check . && eslint .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "comment": "Install development-only dependencies here (e.g., linters, testing tools, build tools)"
+  },
+  "dependencies": {
+    "comment": "Install production dependencies here (e.g., libraries used directly in the app)"
+  },
+  "type": "module"
+}
