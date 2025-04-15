@@ -65,9 +65,8 @@ The primary user interaction model is conversational, driven by AI agents orches
 
 ## 5. Project Structure (Monorepo)
 
-This project uses a monorepo structure to manage the frontend, backend (API & Worker), and related configurations together. This simplifies local development and dependency management while maintaining clear separation for potential future splitting.
+This project uses a monorepo to manage the frontend, backend, and configurations together, simplifying local development while maintaining separation.
 
-```plaintext
 cp-prototype/
 ├── .github/                  # CI/CD Automation (e.g., GitHub Actions)
 │   └── workflows/
@@ -185,7 +184,6 @@ cp-prototype/
 │
 └── scripts/                  # Optional: Helper scripts (e.g., db reset, run linters)
     └── .gitkeep
-```
 
 * **`backend/`:** Python API (FastAPI) & Background Task Worker (SAQ). See `backend/README.md`.
 * **`frontend/`:** SvelteKit User Interface. See `frontend/README.md`.
@@ -195,33 +193,63 @@ cp-prototype/
 
 Architecture choices prioritize developer velocity (solopreneur focus), low operational overhead ("Low-Ops"), cost-efficient scaling, and creator voice authenticity.
 
-* **Core Technology Stack**:
-    * Backend Language/Framework: Python / FastAPI
-    * AI Orchestration: Haystack Framework (v2+)
-    * Frontend Framework: Svelte / SvelteKit
-    * Database: Managed PostgreSQL + `pgvector` extension (for relational & vector data)
-    * DB Migrations: Alembic
-    * Background Tasks: SAQ (Simple Async Queue) library
-    * Task Queue Broker: Managed Redis
-    * Hosting: Container-based PaaS (e.g., Cloud Run, App Runner, Render)
-    * LLM Interaction (PoC): Via managed LLM Gateway (Portkey) for abstraction, monitoring, caching. Architecture allows for future self-hosted/fine-tuned models.
-* **Guiding Principles**:
-    * Minimize direct infrastructure operation ("Low-Ops").
-    * Minimize vendor lock-in (prefer managed open-source/standards where feasible).
-    * Prioritize creator voice authenticity.
-    * Async-first design.
-    * Modularity & Rapid Iteration.
-* **Key Patterns**:
-    * Async-first design (Python `async`/`await`).
-    * Dependency Injection (FastAPI `Depends`, SAQ context/hooks).
-    * Single Backend Docker Image: Builds API + Worker code; run with different commands.
-    * Conversational Agent primary interface via Haystack Tool/Function calling.
-* **Observability Strategy (MVP Target)**:
-    * Instrumentation: OpenTelemetry SDK (standard for traces, metrics, logs).
-    * Backend - Grafana Cloud: Centralized Logs (Loki), Metrics (Mimir), Traces (Tempo). Infrastructure & System view.
-    * Backend - Sentry: Application Error Tracking & Performance Monitoring (APM). Application Code view.
-    * Frontend/Backend - PostHog: Product Analytics, User Behavior Tracking, Feature Flags, Session Replay. User Interaction & Product view.
-    * Supplemented by LLM Gateway (Portkey) for monitoring LLM calls, costs, latency, prompts.
+### 6.a. Core Technology Stack
+
+* Backend Language/Framework: Python / FastAPI
+* AI Orchestration: Haystack Framework (v2+)
+* Frontend Framework: Svelte / SvelteKit
+* Database: Managed PostgreSQL + `pgvector` extension (for relational & vector data)
+* DB Migrations: Alembic
+* Background Tasks: SAQ (Simple Async Queue) library
+* Task Queue Broker: Managed Redis
+* Hosting: Container-based PaaS (e.g., Cloud Run, App Runner, Render)
+* LLM Interaction (PoC): Via managed LLM Gateway (Portkey) for abstraction, monitoring, caching. Architecture allows for future self-hosted/fine-tuned models.
+
+### 6.b. Guiding Principles
+
+* Minimize direct infrastructure operation ("Low-Ops").
+* Minimize vendor lock-in (prefer managed open-source/standards where feasible).
+* Prioritize creator voice authenticity.
+* Async-first design.
+* Modularity & Rapid Iteration.
+
+### 6.c. Key Patterns
+
+* Async-first design (Python `async`/`await`).
+* Dependency Injection (FastAPI `Depends`, SAQ context/hooks).
+* Single Backend Docker Image: Builds API + Worker code; run with different commands.
+* Conversational Agent primary interface via Haystack Tool/Function calling.
+
+### 6.d. API vs. Worker Design Strategy (PoC)
+
+This strategy outlines the division of logic between the synchronous API Process (FastAPI) and the asynchronous Worker Process (SAQ) for the PoC.
+
+* **Guiding Principles:** API Responsiveness (< 500ms target), Background Processing for long tasks (> 500ms, I/O, CPU-heavy), Independent Scalability, Reliability via background retries, Maintainability via shared code.
+* **Core Responsibilities:**
+    * **API (FastAPI):** Handles HTTP requests, quick validation/auth, simple/fast DB ops, *triggers* background tasks, provides *polling endpoints* for job status/results.
+    * **Worker (SAQ):** Executes longer tasks (>500ms), I/O-bound calls (LLM Gateway, external APIs), CPU-intensive work, tasks needing retries. Updates status/results in DB.
+* **Communication Patterns (PoC Scope):**
+    1.  **Triggering:** API validates, generates `job_id`, calls `await queue.enqueue("task_name", job_id=job_id, ...)`, returns `job_id` (e.g., 202 Accepted).
+    2.  **Status Reporting:** Worker updates job status (`PROCESSING`, `COMPLETED`, `FAILED`) and results in DB, keyed by `job_id`.
+    3.  **Status Retrieval:** Client polls API endpoint (`GET /jobs/{job_id}/status`), which reads status/results from DB.
+* **Shared Code Strategy:**
+    * Reusable logic (business rules, DB interactions, clients) in `app/features/.../service.py` or `app/shared/`.
+    * Services accept dependencies (e.g., DB session) explicitly, usable by both API (via `Depends`) and Worker (via explicit setup/context). Avoid FastAPI-specific objects in shared services.
+* **Error Handling (PoC):**
+    * **Worker:** Use `try...except`, log errors, update job status to `FAILED`. Use basic SAQ retries for transient issues.
+    * **API:** Return standard HTTP 4xx/5xx errors with JSON bodies.
+* **Application to Key PoC Features:**
+    * **Worker Tasks:** Content Ingestion, Creator DNA Analysis, Research Topic, Verify Fact, Generate Script Section.
+    * **API Tasks:** Auth, Agent Interaction (triggers workers), Job Status Endpoint.
+* **Future Considerations (MVP+):** Polling likely replaced by WebSockets/SSE; Distributed Tracing (OTel); Advanced worker error handling/concurrency.
+
+### 6.e. Observability Strategy (MVP Target)
+
+* Instrumentation: OpenTelemetry SDK (standard for traces, metrics, logs).
+* Backend - Grafana Cloud: Centralized Logs (Loki), Metrics (Mimir), Traces (Tempo). Infrastructure & System view.
+* Backend - Sentry: Application Error Tracking & Performance Monitoring (APM). Application Code view.
+* Frontend/Backend - PostHog: Product Analytics, User Behavior Tracking, Feature Flags, Session Replay. User Interaction & Product view.
+* Supplemented by LLM Gateway (Portkey) for monitoring LLM calls, costs, latency, prompts.
 
 ## 7. Development Workflow
 
