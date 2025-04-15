@@ -1,10 +1,12 @@
-<!--
-Main HTML template for the SvelteKit application.
-
-This file defines the basic HTML structure (<html>, <head>, <body>).
-SvelteKit injects generated content, styles, and scripts using placeholders
-like `%sveltekit.head%`, `%sveltekit.body%`, and `%sveltekit.assets%`.
-
-Customize this file to add meta tags, link external stylesheets/scripts,
-or define the overall page structure common to all routes.
--->
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

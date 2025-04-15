@@ -1,37 +1,17 @@
-// Configuration file for SvelteKit
-//
-// This file configures the Svelte compiler and SvelteKit framework behavior.
-//
-// Key options:
-// - `preprocess`: Configures preprocessors like `vitePreprocess` for handling TypeScript, SCSS, etc.
-// - `kit`: SvelteKit specific options:
-//   - `adapter`: Configures how the application is adapted for deployment (e.g., adapter-auto, adapter-node, adapter-static).
-//   - `alias`: Defines path aliases (e.g., `$lib` for `src/lib`).
-//   - `files`: Customizes file/directory names (e.g., `assets`, `routes`).
-//   - `outDir`: Specifies the output directory for builds.
-// - `compilerOptions`: Options passed directly to the Svelte compiler (e.g., `runes: true`).
-//
-// See: https://kit.svelte.dev/docs/configuration
-
-// Example basic configuration (adapt as needed):
-import adapter from '@sveltejs/adapter-auto'; // Or your chosen adapter
+import adapter from '@sveltejs/adapter-auto';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	preprocess: vitePreprocess(), // Enables TypeScript, PostCSS, SCSS, etc.
+	// Consult https://svelte.dev/docs/kit/integrations
+	// for more information about preprocessors
+	preprocess: vitePreprocess(),
 
 	kit: {
+		// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
+		// If your environment is not supported, or you settled on a specific environment, switch out the adapter.
+		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 		adapter: adapter()
-		// Add aliases if needed:
-		// alias: {
-		// 	// Example: '@components': 'src/lib/components'
-		// }
-	},
-
-	compilerOptions: {
-		// MANDATORY: Enable runes mode for Svelte 5
-		runes: true
 	}
 };
 
