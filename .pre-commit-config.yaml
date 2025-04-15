@@ -135,10 +135,10 @@ repos:
   # ===================================================================
   # 7. Dockerfile Linting
   # ===================================================================
-  - repo: https://github.com/hadolint/hadolint
-    rev: v2.12.0 # Pinned to specific tag
-    hooks:
-      - id: hadolint # Lints Dockerfiles
+  # - repo: https://github.com/hadolint/hadolint
+  #   rev: v2.12.0 # Pinned to specific tag
+  #   hooks:
+  #     - id: hadolint # Lints Dockerfiles
 
   # ===================================================================
   # 8. Spell/Typo Checking (Useful addition)

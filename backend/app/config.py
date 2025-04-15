@@ -18,8 +18,8 @@ IMPORTANT NOTES:
    via environment variables injected securely, NOT from .env files
 """
 
-from typing import Optional
-from pydantic import HttpUrl, SecretStr
+from typing import Optional, List
+from pydantic import HttpUrl, SecretStr, validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -56,6 +56,30 @@ class Settings(BaseSettings):
     OTEL_EXPORTER_OTLP_ENDPOINT: Optional[HttpUrl] = (
         None  # Optional: For OpenTelemetry Exporter (MVP)
     )
+
+    # --- CORS Configuration ---
+    # Cross-Origin Resource Sharing settings for the API
+    CORS_ALLOWED_ORIGINS: List[str] = [
+        "http://localhost:5173"
+    ]  # Default: Frontend dev server
+    CORS_ALLOW_CREDENTIALS: bool = True
+    CORS_ALLOW_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    CORS_ALLOW_HEADERS: List[str] = ["*"]
+
+    @validator("CORS_ALLOWED_ORIGINS", pre=True)
+    def parse_cors_origins(cls, v):
+        """Parse CORS_ALLOWED_ORIGINS from string or list.
+
+        Allows setting origins as a comma-separated string in environment variables,
+        which is more convenient than trying to define a list.
+        """
+        if isinstance(v, str):
+            # If "*" is specified, return it as a single item for FastAPI to handle correctly
+            if v.strip() == "*":
+                return ["*"]
+            # Otherwise split by comma and strip whitespace
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
 
     # --- Add other future settings here ---
 

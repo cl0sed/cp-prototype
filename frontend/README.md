@@ -66,6 +66,7 @@ You can preview the production build locally with `npm run preview`. Actual depl
 
 ## 4. Project Structure Overview
 
+```plaintext
 frontend/
 ├── src/                  # SvelteKit source code
 │   ├── app.html          # Main HTML template
@@ -94,6 +95,7 @@ frontend/
 ├── .prettierrc.json      # Formatter config
 ├── .eslintrc.cjs         # Linter config
 └── README.md             # This file
+```
 
 (Refer to the **root `README.txt`** for the full monorepo layout).
 

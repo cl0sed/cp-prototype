@@ -1,15 +1,16 @@
 services:
   db:
-    image: pgvector/pgvector:pg17 # Use a Postgres image with pgvector installed
+    image: pgvector/pgvector:pg17 # Consistent with typical project setup, pg17 is fine if intended.
     container_name: db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-app_db} # Use environment variable or default
+      POSTGRES_DB: ${POSTGRES_DB:-app_db}
       POSTGRES_USER: ${POSTGRES_USER:-user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      # Expose port 5432 only if you need to connect directly from your host machine for debugging
+      - "5433:5432" # Mapping host 5433 -> container 5432 to avoid potential host conflicts
     networks:
       - app_network
     healthcheck:
@@ -20,11 +21,12 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7-alpine # Use a recent Redis image
+    image: redis:7-alpine
     container_name: redis
     volumes:
       - redis_data:/data
     ports:
+      # Expose port 6379 only if needed for direct host access
       - "6379:6379"
     networks:
       - app_network
@@ -35,75 +37,79 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # api:
-  #   build:
-  #     context: . # Assuming Dockerfile for backend is in the root or adjust path (e.g., ./backend)
-  #     dockerfile: Dockerfile # Or specify your backend Dockerfile name
-  #   container_name: backend-api
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-app_db}
-  #     - REDIS_URL=redis://redis:6379/0
-  #     - FRONTEND_URL=http://localhost:5173
-  #   volumes:
-  #     - ./backend:/app # Mount your backend source code (adjust path if needed)
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - app_network
-  #   command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-  #   restart: unless-stopped
+  backend:
+    build:
+      context: ./backend
+      # Dockerfile location is implicit if named Dockerfile in context dir
+    container_name: backend
+    env_file:
+      - ./backend/.env # Ensure this file contains DB/Redis URLs using service names (db, redis)
+    volumes:
+      # Mount only the application code for hot-reloading, not the whole directory
+      # This prevents overwriting installed dependencies in the container
+      - ./backend/app:/app/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+    # Command uses --reload for development hot-reloading via Uvicorn
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app
+    restart: unless-stopped
 
-  # worker:
-  #   build:
-  #     context: . # Assuming same Dockerfile as API or adjust path (e.g., ./backend)
-  #     dockerfile: Dockerfile # Or specify your backend Dockerfile name
-  #   container_name: saq_worker
-  #   env_file:
-  #     - .env # Load environment variables from .env file
-  #   environment:
-  #     # Ensure these are set in your .env file or provide defaults here
-  #     - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-app_db}
-  #     - REDIS_URL=redis://redis:6379/0
-  #     # Add other necessary backend environment variables
-  #   volumes:
-  #     - ./backend:/app # Mount your backend source code (adjust path if needed)
-  #   depends_on: # Service dependencies ensure startup order
-  #     db:
-  #       condition: service_healthy # Optional: Waits for db healthcheck
-  #     redis:
-  #       condition: service_healthy # Optional: Waits for redis healthcheck
-  #   networks:
-  #     - app_network
-  #   # *** IMPORTANT: Replace with your actual SAQ worker command ***
-  #   # Example: saq app.worker_settings.queue app.worker_settings --web # (The --web flag is optional, for SAQ's web UI)
-  #   command: saq app.worker_settings.queue app.worker_settings
-  #   restart: unless-stopped
+  worker:
+    build:
+      context: ./backend # Reuse the same backend image build
+    container_name: saq_worker
+    env_file:
+      - ./backend/.env # Ensure this file contains DB/Redis URLs using service names
+    volumes:
+      # Mount only the application code for hot-reloading, mirroring the backend service
+      - ./backend/app:/app/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+    # *** IMPORTANT: Replace with your actual SAQ worker startup command ***
+    # Example using a hypothetical run script: python -m app.worker.run
+    # Example using SAQ CLI directly (adjust paths as needed): saq app.worker.settings.queue app.worker_settings
+    command: python -m app.worker.run # <-- Replace with your actual worker command
+    restart: unless-stopped
 
-  # frontend:
-  #   build:
-  #     context: ./frontend # Assuming frontend code and Dockerfile are in ./frontend
-  #     dockerfile: Dockerfile # Or specify your frontend Dockerfile name
-  #   container_name: frontend
-  #   volumes:
-  #     - ./frontend:/app # Mount frontend source code
-  #     - /app/node_modules # Avoid overwriting node_modules from host
-  #   ports:
-  #     - "5173:5173"
-  #   environment:
-  #     - VITE_API_URL=http://localhost:8000
-  #   depends_on:
-  #     - api
-  #   networks:
-  #     - app_network
-  #   command: npm run dev -- --host
-  #   restart: unless-stopped
+  frontend:
+    # For local development with hot-reloading, we don't use the multi-stage Dockerfile.
+    # Instead, we use a base Node image and run the dev server directly.
+    image: node:20-alpine # Use a base node image
+    container_name: frontend
+    working_dir: /app
+    volumes:
+      # Mount the entire frontend source code
+      - ./frontend:/app
+      # Use an anonymous volume to prevent host node_modules from overwriting container's
+      - /app/node_modules
+    ports:
+      # Map host 5173 to container 5173 (Vite's default dev port)
+      - "5173:5173"
+    environment:
+      # Ensure this points to localhost for browser access during dev
+      - PUBLIC_API_BASE_URL=http://localhost:8000
+      # Ensure Vite dev server is exposed outside the container
+      - HOST=0.0.0.0
+    depends_on:
+      - backend
+    networks:
+      - app_network
+    # Install dependencies if node_modules doesn't exist, then run dev server
+    # The `--host` flag makes Vite listen on all interfaces within the container
+    command: sh -c "npm install && npm run dev -- --host"
+    restart: unless-stopped
 
 volumes:
   postgres_data:
