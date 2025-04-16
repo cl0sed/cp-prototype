@@ -180,8 +180,8 @@ Architecture choices prioritize developer velocity (solopreneur focus)[cite: 433
 * Backend Language/Framework: Python / FastAPI
 * AI Orchestration: Haystack Framework (v2+)
 * Frontend Framework: Svelte / SvelteKit
-* Database: Managed PostgreSQL + `pgvector` extension
-* DB Migrations: Alembic
+* Database: Managed PostgreSQL + `pgvector` extension for vector embeddings
+* DB Migrations: Alembic (configured for automated database schema management)
 * Background Tasks: SAQ (Simple Async Queue) library
 * Task Queue Broker: Managed Redis
 * Hosting: Container-based PaaS
@@ -222,7 +222,7 @@ The database schema is designed to support the application's features from PoC t
     * `script_sections`: Acts as a header for script components (type, order, parent link, link to chosen structure). Stores the current `content` and `previous_content` (for simple MVP versioning/revert).
     * `dna_detailed_analysis`, `research_analysis`, `safety_analysis`, `project_idea_validation`: Store structured results from specific AI analysis tasks, linked to their respective sources/projects/sections. Includes `initiating_job_id` for tracing.
 * **Supporting Tables:** `background_jobs` (tracks SAQ tasks, includes `initiating_job_id`), `feedback` (polymorphic link to various entities), `evaluation_results` (simplified, polymorphic storage for AI/user evaluations), `educational_frameworks`, join tables.
-* **Vector Data Strategy:** Uses `pgvector` extension within PostgreSQL. Embeddings for semantic search reside primarily in `RETRIEVABLE_TEXT`. Queries combine vector similarity search (KNN on `embedding`) with metadata filtering (on FKs or `basic_metadata` JSONB).
+* **Vector Data Strategy:** Uses `pgvector` extension within PostgreSQL. Embeddings for semantic search reside primarily in `RETRIEVABLE_TEXT` with 1536-dimensional vectors corresponding to AI model embedding output. Queries combine vector similarity search (IVFFLAT index on `embedding` with vector_l2_ops) with metadata filtering (on FKs or `basic_metadata` JSONB) for efficient semantic retrieval.
 
 ### 6.f. Architecture Considerations & Technical Debt
 
@@ -247,7 +247,7 @@ This section outlines the process for setting up the local environment, running 
 * **Prerequisites:** Docker, Git, Python env management, Node.js[cite: 4370].
 * **Local Setup:** Clone, configure `backend/.env` (from root `.env.example`, keep secrets out of Git)[cite: 4371, 4372]. Use pre-commit hooks[cite: 4372].
 * **Running Services:** `docker-compose up --build -d`. Access via standard ports. Logs via `docker-compose logs -f`. Stop via `docker-compose down`[cite: 4373, 4374, 4375].
-* **Database Migrations (Alembic):** Apply migrations *before* running app code (`docker-compose exec backend alembic upgrade head`). Generate migrations after model changes (`... alembic revision --autogenerate ...`)[cite: 4375, 4376, 4377].
+* **Database Migrations (Alembic):** Apply migrations *before* running app code (`docker-compose exec backend alembic upgrade head`). Generate migrations after model changes (`docker-compose exec backend alembic revision --autogenerate -m "Description of changes"`). Migration configuration in `backend/alembic.ini` and `backend/app/db/migrations/env.py` loads database settings from application config[cite: 4375, 4376, 4377].
 * **Testing:** Use commands defined in backend/frontend READMEs. CI runs tests automatically[cite: 4377, 4378].
 * **Code Quality:** Linters (Ruff, ESLint) & Formatters (Black, Prettier) configured. Use pre-commit hooks[cite: 4378, 4379].
 * **Configuration & Secrets:** Local via `backend/.env`[cite: 4380]. Deployed via environment variables[cite: 4382]. **CRITICAL:** Use secrets management service for deployed secrets, inject as env vars[cite: 4383].

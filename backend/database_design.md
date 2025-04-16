@@ -118,7 +118,7 @@ erDiagram
         VARCHAR uri "nullable"
         TEXT content "nullable"
         TEXT description
-        JSONB metadata
+        JSONB material_metadata
         TIMESTAMPTZ created_at
     }
 
@@ -162,7 +162,7 @@ erDiagram
         UUID user_id FK
         TEXT chunk_text
         JSONB basic_metadata "Incl. origin_type='story'/'transcript'/etc"
-        VECTOR embedding "HNSW Index"
+        VECTOR embedding "IVFFLAT Index (vector_l2_ops)"
         TIMESTAMPTZ created_at
     }
 

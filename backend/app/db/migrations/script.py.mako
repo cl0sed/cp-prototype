@@ -1,13 +1,27 @@
+"""${message}
+
+Revision ID: ${up_revision}
+Revises: ${down_revision | comma,n}
+Create Date: ${create_date}
+
 """
-Alembic Migration File Template (Mako).
+from typing import Sequence, Union
 
-This is a Mako template file used by Alembic to generate new migration scripts
-(the files that appear in the `versions/` directory).
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+import pgvector
 
-It defines the basic structure of a migration file, including import statements
-and the `upgrade()` and `downgrade()` functions.
+# revision identifiers, used by Alembic.
+revision: str = ${repr(up_revision)}
+down_revision: Union[str, None] = ${repr(down_revision)}
+branch_labels: Union[str, Sequence[str], None] = ${repr(branch_labels)}
+depends_on: Union[str, Sequence[str], None] = ${repr(depends_on)}
 
-You can customize this template to add standard comments, imports, or helper
-functions that you want in every new migration script.
-Avoid putting specific migration logic here; it's just the template.
-"""
+
+def upgrade() -> None:
+    ${upgrades if upgrades else "pass"}
+
+
+def downgrade() -> None:
+    ${downgrades if downgrades else "pass"}

@@ -43,6 +43,7 @@ dev = [
   "identify>=2.6.9,<2.8.0",
   "pyyaml>=6.0.0,<7.0.0",
   # "python-dotenv>=1.0.0,<2.0.0", # Optional: Uncomment to add
+  "sqlalchemy[mypy]>=2.0.35,<2.1.0", # For SQLAlchemy 2.0 type hints
 ]
 
 [build-system]
@@ -74,3 +75,9 @@ line_length = 88
 
 [tool.setuptools]
 packages = ["app"]
+
+[tool.mypy]
+python_version = "3.11"                  # Match requires-python
+plugins = ["sqlalchemy.ext.mypy.plugin"]
+ignore_missing_imports = true            # Optional: Add if needed for other libs
+# Add other mypy settings as needed
