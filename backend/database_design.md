@@ -1,3 +1,4 @@
+```
 erDiagram
     USERS ||--o{ PROJECTS : "owns"
     USERS ||--o{ CREATOR_DNA_PROFILES : "has"
@@ -278,3 +279,4 @@ erDiagram
         JSONB details "nullable"
         TIMESTAMPTZ created_at
     }
+```
