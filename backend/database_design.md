@@ -1,4 +1,4 @@
-```
+```mermaid
 erDiagram
     USERS ||--o{ PROJECTS : "owns"
     USERS ||--o{ CREATOR_DNA_PROFILES : "has"
