@@ -12,7 +12,7 @@ keep it focused on application assembly.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.routers import health
+from .api.routers import health, tasks
 from .config import settings  # Import centralized settings
 
 # Create FastAPI app instance
@@ -56,6 +56,7 @@ print(f"CORS configured to allow these origins: {settings.CORS_ALLOWED_ORIGINS}"
 
 # Include routers after middleware configuration
 app.include_router(health.router)
+app.include_router(tasks.router)  # Include the tasks router
 # Add other routers here...
 
 # ----------------

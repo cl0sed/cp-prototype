@@ -23,6 +23,7 @@ dependencies = [
   "opentelemetry-sdk>=1.31.0,<1.33.0",
   "opentelemetry-exporter-otlp>=1.31.0,<1.33.0",
   "portkey-ai>=1.11.0,<1.12.0",
+  "saq>=0.22.5,<0.23.0",                         # Added SAQ with version 0.22.5+ as specified in requirements
 ]
 
 [project.optional-dependencies]
@@ -32,7 +33,6 @@ dev = [
   "ruff>=0.3.5,<0.4.0",
   "black>=24.3.0,<25.0.0",
   "isort>=5.13.2,<5.14.0",
-  "saq>=0.14.0,<0.15.0",
   "pre-commit>=4.0.0,<4.3.0",
   "click>=8.1.0,<8.2.0",
   "h11>=0.14.0,<0.20.0",

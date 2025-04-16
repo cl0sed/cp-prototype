@@ -77,10 +77,8 @@ services:
         condition: service_healthy
     networks:
       - app_network
-    # *** IMPORTANT: Replace with your actual SAQ worker startup command ***
-    # Example using a hypothetical run script: python -m app.worker.run
-    # Example using SAQ CLI directly (adjust paths as needed): saq app.worker.settings.queue app.worker_settings
-    command: python -m app.worker.run # <-- Replace with your actual worker command
+    # Use the SAQ CLI to run the worker using our settings module
+    command: saq app.worker.settings.settings
     restart: unless-stopped
 
   frontend:

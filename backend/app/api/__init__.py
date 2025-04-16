@@ -1,7 +1,6 @@
 """
-Initialization for the API sub-package.
+API package for the application.
 
-This file marks the `api` directory as a Python package.
-It helps in organizing API related modules (routers, schemas, dependencies).
-Often kept empty.
+This package contains the FastAPI routers, dependencies, middleware,
+and other components related to the API layer.
 """
