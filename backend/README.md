@@ -1,192 +1,230 @@
-# Backend Service README
-
-This README provides detailed information specifically for the backend service
-(FastAPI API and SAQ Worker).
+# Backend Service
 
 ## Overview
 
-The backend service provides the core functionality for the AI Video Creation Platform, consisting of:
+This directory contains the backend API and worker components of the AI Video Creation Platform. The backend is built with FastAPI and employs SAQ (Simple Async Queue) for background task processing. It uses SQLAlchemy for database operations and PostgreSQL as the database.
 
-- **FastAPI API Server**: Handles HTTP requests for user interactions, project management, and AI processing
-- **SAQ Worker**: Processes background tasks like AI analysis, embeddings generation, and long-running operations
-- **PostgreSQL Database**: Stores all user data, project information, and AI-generated content with pgvector extension for vector search capabilities
+## Setup & Running Locally
 
-## Local Development Setup
+1. Install dependencies:
+   ```bash
+   cd backend
+   pip install -e .
+   ```
 
-### Prerequisites
-- Python 3.11+
-- Docker and Docker Compose
-- PostgreSQL 17 with pgvector extension
+2. Configure environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env file with your local settings
+   ```
 
-### Environment Setup
-1. Copy `.env.example` to `.env` in the `backend/` directory
-2. Update the DATABASE_URL and other environment variables as needed
+3. Apply database migrations:
+   ```bash
+   alembic upgrade head
+   ```
 
-### Running with Docker (Recommended)
-The easiest way to run the backend is using Docker Compose from the project root:
-```bash
-docker-compose up -d
+4. Run the API server locally (development mode):
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+
+5. Run the worker locally:
+   ```bash
+   saq app.worker.settings.settings
+   ```
+
+## Docker-based Development
+
+When using the Docker setup defined in the root directory:
+
+1. Build and start the services:
+   ```bash
+   docker-compose up --build
+   ```
+
+2. Apply migrations:
+   ```bash
+   docker-compose exec backend alembic upgrade head
+   ```
+
+3. View logs:
+   ```bash
+   docker-compose logs -f backend  # API server logs
+   docker-compose logs -f worker   # Background worker logs
+   ```
+
+## Background Task Architecture
+
+### SAQ Implementation
+
+The project uses SAQ (Simple Async Queue) for asynchronous background task processing. The implementation follows these key patterns:
+
+1. **Queue Configuration**:
+   - Redis-backed queue defined in `app/worker/settings.py`
+   - Named "default" queue for standard tasks
+   - Uses the application's `REDIS_URL` configuration
+
+2. **Lifecycle Hooks**:
+   - `startup`: Initializes database session factory in worker context
+   - `shutdown`: Performs cleanup when worker process terminates
+   - `before_process`: Records task start in database with `Status.ACTIVE`
+   - `after_process`: Updates task status to `Status.COMPLETE` or `Status.FAILED` with results/errors
+
+3. **Task Status Tracking**:
+   - Uses native SAQ `Status` enum values: `NEW`, `QUEUED`, `ACTIVE`, `COMPLETE`, `FAILED`, etc.
+   - Status values stored directly in `background_jobs` table
+
+4. **Database Integration**:
+   - Tasks tracked in `background_jobs` table
+   - Uses SQLAlchemy ORM for database operations
+   - Records job_id, task_name, status, user/project context, results, errors
+
+### API/Worker Flow
+
+1. Client calls API endpoint (e.g., `/api/v1/tasks/trigger-test`)
+2. API enqueues a task via SAQ's `queue.enqueue()` method
+3. API returns the job ID to the client with 202 Accepted status
+4. Worker's `before_process` hook creates/updates a database record with `Status.ACTIVE`
+5. Worker executes the task function
+6. Worker's `after_process` hook updates the database record with final status and results
+7. Client can query task status via API endpoint using the job ID
+
+### SAQ Task Implementation Guide
+
+To implement a new background task:
+
+1. Define the task function in an appropriate module under `app/worker/tasks.py` or feature-specific files:
+
+```python
+async def my_example_task(
+    ctx: Context,
+    *,
+    param1: str,
+    param2: Optional[int] = None,
+    user_id: Optional[uuid.UUID] = None,
+    project_id: Optional[uuid.UUID] = None,
+) -> Dict[str, Any]:
+    """
+    Example task processing.
+
+    Args:
+        ctx: SAQ context containing job information
+        param1: Example required parameter
+        param2: Example optional parameter
+        user_id: User who initiated the task (optional)
+        project_id: Related project (optional)
+
+    Returns:
+        Result dictionary that will be stored in the database
+    """
+    # Get job ID for logging
+    job = ctx.get("job")
+    job_id = job.id if job else "unknown"
+
+    try:
+        # Task implementation here
+        # ...
+
+        # Return result as a serializable dictionary
+        return {
+            "status": "success",
+            "result_data": "your result here",
+        }
+    except Exception as e:
+        # Log the error and re-raise to allow SAQ to handle failure
+        logger.exception(f"Error in my_example_task: {str(e)}")
+        raise
 ```
 
-This starts the API server, worker, PostgreSQL database, and Redis server.
+2. Register the task in `app/worker/settings.py`:
 
-### Running Locally (Development)
-For local development without Docker:
-```bash
-# Install dependencies
-pip install -e .
+```python
+# Add import
+from app.worker.tasks import my_example_task
 
-# Run the API server
-uvicorn app.main:app --reload --port 8000
-
-# Run the worker (in a separate terminal)
-python -m app.worker.run
+# Add to functions list in settings
+settings = {
+    "queue": queue,
+    "concurrency": 5,
+    "functions": [
+        poc_test_task,
+        my_example_task,  # Add your new task here
+    ],
+    "startup": startup,
+    "shutdown": shutdown,
+    "before_process": before_process,
+    "after_process": after_process,
+}
 ```
 
-## Database Migrations (Alembic)
+3. Create an API endpoint to trigger the task:
 
-The project uses Alembic for database migrations. Migrations are stored in `app/db/migrations/`.
+```python
+@router.post("/tasks/my-example", status_code=status.HTTP_202_ACCEPTED)
+async def trigger_example_task(payload: YourRequestModel) -> YourResponseModel:
+    try:
+        # Convert to task parameters
+        task_kwargs = payload.dict(exclude_unset=True)
 
-### Initial Setup
-The database is configured with all necessary tables and the pgvector extension for vector embeddings. When starting a fresh instance:
+        # Enqueue the task
+        job = await queue.enqueue("my_example_task", **task_kwargs)
 
-```bash
-# Apply all migrations
-docker-compose exec backend alembic upgrade head
+        return YourResponseModel(
+            message="Task accepted",
+            job_id=job.id,
+        )
+    except Exception as e:
+        logger.exception(f"Failed to enqueue task: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to enqueue task",
+        )
 ```
 
-### Working with Migrations
+### Known Limitations and Workarounds
 
-1. **Generate a new migration after model changes:**
-    ```bash
-    # Run from inside the backend container
-    docker-compose exec backend alembic revision --autogenerate -m "Description of changes"
-    ```
+1. **SAQ Version 0.22.5+ Hook Limitations**:
+   - SAQ 0.22.5+ supports only `startup`, `shutdown`, `before_process`, and `after_process` hooks
+   - Additional hooks like `before_complete`, `before_retry`, and `on_success` are planned for future SAQ versions
+   - Current workaround: Implement all logic in `before_process` and `after_process` hooks
 
-2. **Apply pending migrations:**
-    ```bash
-    docker-compose exec backend alembic upgrade head
-    ```
+2. **Status Representation**:
+   - Always use the SAQ `Status` enum (imported from `saq.job`) for consistency
+   - Avoid hardcoded status strings
 
-3. **View migration history:**
-    ```bash
-    docker-compose exec backend alembic history
-    ```
+3. **Database Integration**:
+   - Always use SQLAlchemy ORM for database operations in hooks
+   - Avoid raw SQL strings due to injection risks and lack of type safety
+   - Properly manage sessions with `async with` contexts
 
-4. **Downgrade to a previous version:**
-    ```bash
-    # Downgrade one step
-    docker-compose exec backend alembic downgrade -1
+4. **Error Handling**:
+   - Catch exceptions in hooks but not in tasks (let SAQ handle task failures)
+   - Log exceptions before re-raising in tasks
+   - Use log levels appropriately (DEBUG, INFO, WARNING, ERROR)
 
-    # Downgrade to a specific revision
-    docker-compose exec backend alembic downgrade revision_id
-    ```
+## Database Migrations
 
-5. **Get current migration version:**
-    ```bash
-    docker-compose exec backend alembic current
-    ```
-
-### Migration Configuration
-- **alembic.ini**: Located at `backend/alembic.ini` - contains basic Alembic configuration
-- **env.py**: Located at `app/db/migrations/env.py` - configures how Alembic connects to the database and loads models
-- **Database URL**: Loaded from environment variables via `app.config.settings`
-- **Models**: Loaded from `app.db.models` which defines the SQLAlchemy models
-
-### Vector Search Support
-The database is configured with pgvector extension for embedding storage and similarity search. The `retrievable_text` table includes a VECTOR(1536) column with an IVFFLAT index for efficient similarity searches.
-
-## Running Tests
-
-### Running Tests
-```bash
-# Run all tests
-docker-compose exec backend pytest
-
-# Run tests with coverage report
-docker-compose exec backend pytest --cov=app tests/
-
-# Run specific test file
-docker-compose exec backend pytest tests/test_specific_module.py
-
-# Run tests matching a specific name pattern
-docker-compose exec backend pytest -k "test_pattern"
-```
-
-## Code Style & Linting
-
-The project uses:
-- **Ruff**: For linting and code formatting
-- **MyPy**: For static type checking
+Generate a new migration after model changes:
 
 ```bash
-# Run linting
-docker-compose exec backend ruff check .
-
-# Run formatting
-docker-compose exec backend ruff format .
-
-# Run type checking
-docker-compose exec backend mypy app/
+alembic revision --autogenerate -m "Description of changes"
 ```
 
-Pre-commit hooks are configured in `.pre-commit-config.yaml` in the project root to automatically run these checks before commits.
+Apply migrations:
 
-### Type Checking Configuration
+```bash
+alembic upgrade head
+```
 
-The project uses SQLAlchemy 2.0 which includes built-in type annotations. MyPy is configured to work with these annotations through:
+## Testing
 
-- **`.mypy.ini`**: Located at `backend/.mypy.ini` - contains settings for the SQLAlchemy plugin
-- **SQLAlchemy Plugin**: The configuration includes the SQLAlchemy plugin (`sqlalchemy.ext.mypy.plugin`) which enables proper type checking of SQLAlchemy ORM models
-- **Pre-commit Integration**: The mypy pre-commit hook is configured to use the system Python (your virtual environment) and the project's mypy configuration
+Run tests:
 
-For SQLAlchemy 2.0 type checking to work correctly:
-- Do not install `sqlalchemy-stubs` as it conflicts with SQLAlchemy 2.0's built-in typing
-- Ensure `sqlalchemy[mypy]` is installed in your development environment
+```bash
+pytest
+```
 
-## Deployment
+With coverage:
 
-The backend is deployed as a containerized application. See the root README.md for complete deployment details.
-
-- **Dockerfile**: `backend/Dockerfile` - a multi-stage build that creates a single image used for both API and worker services
-- **API Entrypoint**: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-- **Worker Entrypoint**: `python -m app.worker.run`
-
-Both services use the same Docker image but different commands, allowing for better resource utilization and simplified deployment.
-
-## Key Components & Structure
-
-The backend follows a modular architecture:
-
-- **`app/main.py`**: FastAPI application initialization, middleware setup, and API router inclusion
-- **`app/config.py`**: Environment configuration using Pydantic settings
-- **`app/api/`**: API endpoints, request/response schemas, and dependencies
-  - **`routers/`**: Endpoint grouping by feature
-  - **`dependencies.py`**: Common API dependencies (auth, DB session, etc.)
-  - **`schemas.py`**: Pydantic models for API request/response validation
-- **`app/worker/`**: Background job processing using SAQ
-  - **`settings.py`**: Queue configuration
-  - **`run.py`**: Worker entrypoint
-- **`app/db/`**: Database layer
-  - **`models.py`**: SQLAlchemy ORM models (with metadata for Alembic)
-  - **`session.py`**: Database connection handling
-  - **`migrations/`**: Alembic migration scripts
-- **`app/shared/`**: Cross-cutting concerns
-  - **`clients/`**: External API clients
-  - **`utils.py`**: Common utilities
-  - **`exceptions.py`**: Custom exception classes
-- **`app/features/`**: Business logic modules organized by domain
-  - Each feature has consistent structure (service.py, tasks.py, pipelines.py)
-- **`tests/`**: Automated tests mirroring the application structure
-
-## Database Schema
-
-The database schema is defined in SQLAlchemy models in `app/db/models.py` and includes:
-
-- **Users & Authentication**: User accounts and authentication data
-- **Projects & Content**: Project structure, content sources, and generated scripts
-- **AI Analysis**: DNA profiles, research analysis, and safety checks
-- **Vector Storage**: Retrievable text chunks with vector embeddings for semantic search
-- **Background Processing**: Job tracking and task management
-
-See `database_design.md` for complete schema details and entity relationships.
+```bash
+pytest --cov=app

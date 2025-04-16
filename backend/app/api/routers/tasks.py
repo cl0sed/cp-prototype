@@ -4,21 +4,26 @@ Task Router Module.
 This module defines the endpoints for triggering and managing background tasks.
 """
 
+import logging
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.worker.settings import queue
+from app.shared.constants import (
+    Status as JobStatus,
+)  # Import SAQ's Status enum directly
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/tasks", tags=["Tasks"])
 
 
 class TriggerRequest(BaseModel):
     """Request model for the task trigger endpoint."""
 
-    message: str = "Default message"
+    message: str = Field(default="Default message", description="Message to process")
     user_id: Optional[uuid.UUID] = Field(
         default=None, description="User ID associated with this task"
     )
@@ -32,6 +37,7 @@ class TriggerResponse(BaseModel):
 
     message: str
     job_id: str
+    status: str
 
 
 @router.post(
@@ -49,24 +55,28 @@ async def trigger_test_task(payload: TriggerRequest) -> TriggerResponse:
     Returns:
         A response containing the job ID that can be used to track the task's status.
     """
-    # Convert the Pydantic model to a dict, filtering out None values
+    # Safely handle UUID objects for JSON serialization
     task_kwargs = {}
     for k, v in payload.dict().items():
         if v is not None:
-            # Convert UUID objects to strings for JSON serialization
             if isinstance(v, uuid.UUID):
                 task_kwargs[k] = str(v)
             else:
                 task_kwargs[k] = v
 
     try:
-        # Enqueue the task to be processed by the worker
+        # Enqueue the task
         job = await queue.enqueue("poc_test_task", **task_kwargs)
 
         return TriggerResponse(
-            message="Test task accepted and queued for processing", job_id=job.id
+            message="Test task accepted and queued for processing",
+            job_id=job.id,
+            status=JobStatus.QUEUED.value,  # Use the native SAQ status value
         )
-    except Exception:
-        # In a real application, you might want to log this error and handle it more gracefully
-        # For now, just re-raise to let FastAPI handle it with a 500 error
-        raise
+    except Exception as e:
+        # Log and handle any enqueue errors
+        logger.exception(f"Failed to enqueue task: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to enqueue task: {str(e)}",
+        )
