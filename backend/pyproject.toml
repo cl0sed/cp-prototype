@@ -12,10 +12,10 @@ dependencies = [
   "fastapi>=0.115.0,<0.116.0",
   "uvicorn[standard]>=0.34.0,<0.35.0",
   "haystack-ai>=2.0.0,<3.0.0",
-  "psycopg[binary]>=3.2.0,<3.3.0",
   "sqlalchemy>=2.0.35,<2.1.0",
   "pgvector>=0.4.0,<0.5.0",
   "alembic>=1.15.1,<1.16.0",
+  "asyncpg>=0.30.0,<0.31.0",                     # Added for PostgreSQL async support
   "redis>=5.2.0,<5.3.0",
   "pydantic-settings>=2.8.0,<2.9.0",
   "python-jose[cryptography]>=3.4.0,<3.5.0",
@@ -24,6 +24,7 @@ dependencies = [
   "opentelemetry-exporter-otlp>=1.31.0,<1.33.0",
   "portkey-ai>=1.11.0,<1.12.0",
   "saq>=0.22.5,<0.23.0",                         # Added SAQ with version 0.22.5+ as specified in requirements
+  "supertokens-python>=0.29.1,<0.30.0",          # Added SuperTokens SDK
 ]
 
 [project.optional-dependencies]

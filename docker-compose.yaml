@@ -58,7 +58,9 @@ services:
     networks:
       - app_network
     # Command uses --reload for development hot-reloading via Uvicorn
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app"
     restart: unless-stopped
 
   worker:
@@ -96,10 +98,10 @@ services:
       # Map host 5173 to container 5173 (Vite's default dev port)
       - "5173:5173"
     environment:
-      # Ensure this points to localhost for browser access during dev
+      # Environment variables for the frontend
       - PUBLIC_API_BASE_URL=http://localhost:8000
-      # Ensure Vite dev server is exposed outside the container
-      - HOST=0.0.0.0
+      - PUBLIC_WEBSITE_DOMAIN=http://localhost:5173
+      - PUBLIC_APP_NAME=AI Video Platform
     depends_on:
       - backend
     networks:

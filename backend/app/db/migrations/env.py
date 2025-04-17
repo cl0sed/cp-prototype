@@ -1,9 +1,9 @@
 import os
 import sys
+import asyncio
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 
@@ -84,34 +84,35 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
-    # Get the database URL from settings
+def do_run_migrations(connection):
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        # compare_type=True, # Optional: Check column types too
+        # include_schemas=True, # If using schemas
+        # include_object=include_object # Add if using include_object filter
+    )
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+async def run_migrations_online_async() -> None:
+    """Run migrations in 'online' mode using async engine."""
+    # Get the database URL
     db_url = get_url_from_settings()
 
-    # Create engine configuration dictionary
-    connectable_config = {
-        "sqlalchemy.url": db_url
-        # Add other engine options from alembic.ini if needed, e.g.:
-        # 'pool_pre_ping': config.get_main_option('pool_pre_ping', 'True'),
-    }
+    # Create async engine
+    connectable = create_async_engine(db_url)
 
-    connectable = engine_from_config(
-        connectable_config,  # Use dynamically created config
-        prefix="sqlalchemy.",  # Standard prefix
-        poolclass=pool.NullPool,  # Recommended for Alembic runs
-    )
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            # compare_type=True, # Optional: Check column types too
-            # include_schemas=True, # If using schemas
-            # include_object=include_object # Add if using include_object filter
-        )
-        with context.begin_transaction():
-            context.run_migrations()
+    await connectable.dispose()
+
+
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
+    asyncio.run(run_migrations_online_async())
 
 
 # --- Main Execution Logic ---

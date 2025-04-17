@@ -21,10 +21,20 @@ This file tracks the project's progress using a task list format.
 * **1m Foundation & Setup:** Frontend Configuration: Setup mechanism for frontend to get backend API URL (e.g., build-time env var).
 * **2a Data Layer:** Define Minimal PostgreSQL Schemas (SQLAlchemy models). Setup Alembic, Create & Apply Initial Migration.
 * **3a Background Processing (SAQ):** Basic SAQ Setup & Test Task: Configure Queue, simple test task, basic API trigger, basic worker entrypoint. Verify locally.
+* **4a API & Core Logic:** Implement Basic User Auth Endpoints using SuperTokens.
+  * **4a-1:** Add SuperTokens dependency to backend (supertokens-python-sdk) and frontend (supertokens-web-js).
+  * **4a-2:** Update User model to include supertokens_user_id field.
+  * **4a-3:** Create SuperTokens configuration module in backend/app/features/auth/.
+  * **4a-4:** Implement async-compatible user linking between SuperTokens and our database.
+  * **4a-5:** Create protected /agent/interact endpoint with session verification.
+  * **4a-6:** Create frontend authentication UI using SuperTokens pre-built components.
+  * **4a-7:** Update API client to handle authentication tokens.
+  * **4a-8:** Add login/logout functionality to the main layout.
+  * **4a-9:** Create protected dashboard page that requires authentication.
+  * **4a-10:** Document authentication architecture in Memory Bank.
 
 ## Current Tasks
 
-* **4a API & Core Logic:** Implement Basic User Auth Endpoints (Register/Login - JWT) & AuthZ Dependency.
 * **4b API & Core Logic:** Implement /agent/interact API Endpoint Structure (Pydantic models) & basic request handling logic. Ensure CORS setup.
 * **5a AI Core (Haystack & LLM Gateway):** Basic LLM Gateway Setup (Portkey): Sign up, get API key, configure Portkey client in App config.
 * **5b AI Core (Haystack & LLM Gateway):** Portkey Integration (Gateway): Configure Haystack components to use Portkey endpoint/SDK.

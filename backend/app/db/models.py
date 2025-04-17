@@ -84,6 +84,9 @@ class User(Base):
         UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
     )
     email: Mapped[str] = mapped_column(String, unique=True, index=True)
+    supertokens_user_id: Mapped[Optional[str]] = mapped_column(
+        String, unique=True, index=True, nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), server_default=func.now(), nullable=False, index=True
     )

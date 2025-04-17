@@ -10,10 +10,13 @@ Avoid putting business logic or specific endpoint implementations in this file;
 keep it focused on application assembly.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from .api.routers import health, tasks
+from .api.routers import health, tasks, agent
 from .config import settings  # Import centralized settings
+from .features.auth import init_supertokens  # Import SuperTokens initialization
+from supertokens_python.recipe.session import SessionContainer
+from supertokens_python.recipe.session.framework.fastapi import verify_session
 
 # Create FastAPI app instance
 app = FastAPI(
@@ -47,6 +50,13 @@ app.add_middleware(
 )
 print(f"CORS configured to allow these origins: {settings.CORS_ALLOWED_ORIGINS}")
 
+# ----------------
+# AUTHENTICATION SETUP - Initialize SuperTokens AFTER CORS middleware
+# ----------------
+
+# Initialize SuperTokens with our FastAPI app
+init_supertokens(app)
+
 # 2. Add any other middleware here (they will execute after CORS)
 # Example: app.add_middleware(SomeOtherMiddleware, ...)
 
@@ -57,7 +67,14 @@ print(f"CORS configured to allow these origins: {settings.CORS_ALLOWED_ORIGINS}"
 # Include routers after middleware configuration
 app.include_router(health.router)
 app.include_router(tasks.router)  # Include the tasks router
-# Add other routers here...
+app.include_router(agent.router)  # Include the agent router with protected endpoints
+
+
+# Add a test route to verify session
+@app.get("/auth/session")
+async def session_info(session: SessionContainer = Depends(verify_session())):
+    return {"user_id": session.get_user_id()}
+
 
 # ----------------
 # LOGGING CONFIGURATION
