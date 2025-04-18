@@ -266,7 +266,7 @@ class Project(Base):
 
     evaluation_results_link: Mapped[List["EvaluationResult"]] = relationship(
         "EvaluationResult",
-        primaryjoin="and_(Project.id == EvaluationResult.target_entity_id, EvaluationResult.target_entity_type == 'PROJECTS')",
+        primaryjoin="and_(Project.id == foreign(EvaluationResult.target_entity_id), foreign(EvaluationResult.target_entity_type) == 'PROJECTS')",
         overlaps="evaluation_results,project",  # Specify overlaps to avoid warnings
         # Consider adding viewonly=True if this is read-only
         # viewonly=True,
@@ -373,7 +373,7 @@ class AudienceAvatar(Base):
 
     evaluation_results: Mapped[List["EvaluationResult"]] = relationship(
         "EvaluationResult",
-        primaryjoin="and_(AudienceAvatar.id == EvaluationResult.target_entity_id, EvaluationResult.target_entity_type == 'AUDIENCE_AVATARS')",
+        primaryjoin="and_(AudienceAvatar.id == foreign(EvaluationResult.target_entity_id), foreign(EvaluationResult.target_entity_type) == 'AUDIENCE_AVATARS')",
         cascade="all, delete-orphan",
         # Ensure EvaluationResult has a back_populates if needed
         # back_populates="audience_avatar", # Example
@@ -411,7 +411,7 @@ class SupportingMaterial(Base):
 
     evaluation_results: Mapped[List["EvaluationResult"]] = relationship(
         "EvaluationResult",
-        primaryjoin="and_(SupportingMaterial.id == EvaluationResult.target_entity_id, EvaluationResult.target_entity_type == 'SUPPORTING_MATERIALS')",
+        primaryjoin="and_(SupportingMaterial.id == foreign(EvaluationResult.target_entity_id), foreign(EvaluationResult.target_entity_type) == 'SUPPORTING_MATERIALS')",
         cascade="all, delete-orphan",
         # Ensure EvaluationResult has a back_populates if needed
         # back_populates="supporting_material", # Example
@@ -463,7 +463,7 @@ class ProjectTopic(Base):
 
     evaluation_results: Mapped[List["EvaluationResult"]] = relationship(
         "EvaluationResult",
-        primaryjoin="and_(ProjectTopic.id == EvaluationResult.target_entity_id, EvaluationResult.target_entity_type == 'PROJECT_TOPICS')",
+        primaryjoin="and_(ProjectTopic.id == foreign(EvaluationResult.target_entity_id), foreign(EvaluationResult.target_entity_type) == 'PROJECT_TOPICS')",
         cascade="all, delete-orphan",
         # Ensure EvaluationResult has a back_populates if needed
         # back_populates="project_topic", # Example
@@ -513,7 +513,7 @@ class GeneratedStructure(Base):
     # Dynamically added relationship from end of file
     evaluation_results: Mapped[List["EvaluationResult"]] = relationship(
         "EvaluationResult",
-        primaryjoin="and_(GeneratedStructure.id == EvaluationResult.target_entity_id, EvaluationResult.target_entity_type == 'GENERATED_STRUCTURES')",
+        primaryjoin="and_(GeneratedStructure.id == foreign(EvaluationResult.target_entity_id), foreign(EvaluationResult.target_entity_type) == 'GENERATED_STRUCTURES')",
         cascade="all, delete-orphan",
         # Ensure EvaluationResult has a back_populates if needed
         # back_populates="generated_structure", # Example
@@ -782,7 +782,7 @@ class ScriptSection(Base):
     )
     evaluation_results: Mapped[List["EvaluationResult"]] = relationship(
         "EvaluationResult",
-        primaryjoin="and_(ScriptSection.id == EvaluationResult.target_entity_id, EvaluationResult.target_entity_type == 'SCRIPT_SECTIONS')",
+        primaryjoin="and_(ScriptSection.id == foreign(EvaluationResult.target_entity_id), foreign(EvaluationResult.target_entity_type) == 'SCRIPT_SECTIONS')",
         cascade="all, delete-orphan",
         # Ensure EvaluationResult has a back_populates if needed
         # back_populates="script_section", # Example

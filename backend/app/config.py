@@ -18,62 +18,57 @@ IMPORTANT NOTES:
    via environment variables injected securely, NOT from .env files
 """
 
+# Remove os import, not needed
 from typing import Optional, List
-from pydantic import HttpUrl, SecretStr, computed_field
+from pydantic import (
+    HttpUrl,
+    SecretStr,
+    computed_field,
+    Field,
+)  # Import Field for default
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables or .env file.
-
-    This class defines all configuration parameters used throughout the application.
-    Values are loaded with the following precedence:
-    1. Environment variables
-    2. .env file (for local development)
-    3. Default values defined here
-
-    For production deployments, ALL values should be provided via environment
-    variables injected securely (e.g., from a secrets manager), NOT from .env files.
     """
 
     # Environment Identifier
-    ENVIRONMENT: str = "development"  # Can be "development", "staging", "production"
+    ENVIRONMENT: str = "development"
 
     # PoC Required Variables
-    DATABASE_URL: str  # PostgreSQL connection string
-    REDIS_URL: str  # Redis connection string
-    LOG_LEVEL: str = "INFO"  # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-    LLM_API_KEY: Optional[SecretStr] = (
-        None  # API key for LLM provider, using SecretStr for security
-    )
+    DATABASE_URL: str
+    REDIS_URL: str
+    LOG_LEVEL: str = "INFO"
+    LLM_API_KEY: Optional[SecretStr] = None
 
     # --- SuperTokens Configuration ---
-    SUPERTOKENS_CONNECTION_URI: str  # Connection URI for the SuperTokens core
-    SUPERTOKENS_API_KEY: SecretStr  # API key for the SuperTokens core
+    SUPERTOKENS_CONNECTION_URI: str
+    SUPERTOKENS_API_KEY: SecretStr
 
     # --- Observability (MVP) ---
-    # These variables are optional for PoC but will be needed for MVP
-    # They are defined here to establish the structure for future expansion
-    SENTRY_DSN: Optional[str] = None  # Optional: For Sentry error tracking (MVP)
-    POSTHOG_API_KEY: Optional[SecretStr] = None  # Optional: For PostHog analytics (MVP)
-    OTEL_EXPORTER_OTLP_ENDPOINT: Optional[HttpUrl] = (
-        None  # Optional: For OpenTelemetry Exporter (MVP)
-    )
+    SENTRY_DSN: Optional[str] = None
+    POSTHOG_API_KEY: Optional[SecretStr] = None
+    OTEL_EXPORTER_OTLP_ENDPOINT: Optional[HttpUrl] = None
 
     # --- CORS Configuration ---
-    # Use a plain string field for CORS origins to avoid Pydantic JSON parsing issues
-    CORS_ORIGINS: str = "http://localhost:5173"
+    # Load CORS_ORIGINS from env/.env, default to proxy address if not set
+    CORS_ORIGINS: str = Field(default="http://localhost")
     CORS_ALLOW_CREDENTIALS: bool = True
-    CORS_ALLOW_METHODS: str = "GET,POST,PUT,DELETE,OPTIONS"
-    CORS_ALLOW_HEADERS: str = "*"
+    CORS_ALLOW_METHODS: str = Field(default="GET,POST,PUT,DELETE,OPTIONS")
+    CORS_ALLOW_HEADERS: str = Field(default="*")
+
+    # --- Proxy Header Configuration ---
+    # Tell Uvicorn/FastAPI which IPs are trusted to send proxy headers (X-Forwarded-*)
+    # Load from env/.env, default to '*' for development ease. Restrict in production.
+    FORWARDED_ALLOW_IPS: str = Field(default="*")
 
     # Compute the CORS_ALLOWED_ORIGINS list from the string
     @computed_field
     def CORS_ALLOWED_ORIGINS(self) -> List[str]:
         """Split the CORS_ORIGINS string into a list."""
-        if not self.CORS_ORIGINS:
-            return ["http://localhost:5173"]
+        # No need for default here as Field provides it
         return [
             origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()
         ]
@@ -82,8 +77,7 @@ class Settings(BaseSettings):
     @computed_field
     def CORS_ALLOWED_METHODS(self) -> List[str]:
         """Split the CORS_ALLOW_METHODS string into a list."""
-        if not self.CORS_ALLOW_METHODS:
-            return ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        # No need for default here as Field provides it
         return [
             method.strip()
             for method in self.CORS_ALLOW_METHODS.split(",")
@@ -112,3 +106,9 @@ class Settings(BaseSettings):
 
 # Create a single instance of Settings to be imported by other modules
 settings = Settings()
+
+# Debug print to confirm FORWARDED_ALLOW_IPS value after loading
+print(f"DEBUG - FORWARDED_ALLOW_IPS set to: {settings.FORWARDED_ALLOW_IPS}")
+print(
+    f"DEBUG - CORS_ALLOWED_ORIGINS set to: {settings.CORS_ALLOWED_ORIGINS}"
+)  # Also print CORS origins

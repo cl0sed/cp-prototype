@@ -1,6 +1,6 @@
 services:
   db:
-    image: pgvector/pgvector:pg17 # Consistent with typical project setup, pg17 is fine if intended.
+    image: pgvector/pgvector:pg17
     container_name: db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-app_db}
@@ -9,8 +9,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      # Expose port 5432 only if you need to connect directly from your host machine for debugging
-      - "5433:5432" # Mapping host 5433 -> container 5432 to avoid potential host conflicts
+      - "5433:5432"
     networks:
       - app_network
     healthcheck:
@@ -26,7 +25,6 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      # Expose port 6379 only if needed for direct host access
       - "6379:6379"
     networks:
       - app_network
@@ -40,16 +38,11 @@ services:
   backend:
     build:
       context: ./backend
-      # Dockerfile location is implicit if named Dockerfile in context dir
     container_name: backend
     env_file:
-      - ./backend/.env # Ensure this file contains DB/Redis URLs using service names (db, redis)
+      - ./backend/.env
     volumes:
-      # Mount only the application code for hot-reloading, not the whole directory
-      # This prevents overwriting installed dependencies in the container
       - ./backend/app:/app/app
-    ports:
-      - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -57,20 +50,19 @@ services:
         condition: service_healthy
     networks:
       - app_network
-    # Command uses --reload for development hot-reloading via Uvicorn
+    # Add --proxy-headers flag to Uvicorn command
     command: >
       sh -c "alembic upgrade head &&
-             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app"
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app --proxy-headers"
     restart: unless-stopped
 
   worker:
     build:
-      context: ./backend # Reuse the same backend image build
+      context: ./backend
     container_name: saq_worker
     env_file:
-      - ./backend/.env # Ensure this file contains DB/Redis URLs using service names
+      - ./backend/.env
     volumes:
-      # Mount only the application code for hot-reloading, mirroring the backend service
       - ./backend/app:/app/app
     depends_on:
       db:
@@ -79,41 +71,49 @@ services:
         condition: service_healthy
     networks:
       - app_network
-    # Use the SAQ CLI to run the worker using our settings module
     command: saq app.worker.settings.settings
     restart: unless-stopped
 
-  frontend:
-    # For local development with hot-reloading, we don't use the multi-stage Dockerfile.
-    # Instead, we use a base Node image and run the dev server directly.
-    image: node:20-alpine # Use a base node image
-    container_name: frontend
+  frontend-react:
+    build:
+      context: ./frontend-react
+      target: development
+    container_name: frontend-react
     working_dir: /app
     volumes:
-      # Mount the entire frontend source code
-      - ./frontend:/app
-      # Use an anonymous volume to prevent host node_modules from overwriting container's
+      - ./frontend-react:/app
       - /app/node_modules
-    ports:
-      # Map host 5173 to container 5173 (Vite's default dev port)
-      - "5173:5173"
     environment:
-      # Environment variables for the frontend
-      - PUBLIC_API_BASE_URL=http://localhost:8000
-      - PUBLIC_WEBSITE_DOMAIN=http://localhost:5173
-      - PUBLIC_APP_NAME=AI Video Platform
+      - VITE_API_URL=http://localhost
+      - VITE_WEBSITE_DOMAIN=http://localhost
+      - VITE_APP_NAME=AI Video Platform (React)
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
     networks:
       - app_network
-    # Install dependencies if node_modules doesn't exist, then run dev server
-    # The `--host` flag makes Vite listen on all interfaces within the container
-    command: sh -c "npm install && npm run dev -- --host"
+    command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./reverse-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - frontend-react
+      - backend
+    networks:
+      - app_network
     restart: unless-stopped
 
 volumes:
   postgres_data:
   redis_data:
+  nginx_logs:
 
 networks:
   app_network:

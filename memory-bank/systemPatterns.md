@@ -2,7 +2,7 @@
 
 This file documents recurring patterns and standards used in the project.
 It is optional, but recommended to be updated as the project evolves.
-2025-04-17 08:43:50 - Log of updates made.
+2025-04-18 09:29:10 - Log of updates made.
 
 *
 
@@ -15,6 +15,7 @@ It is optional, but recommended to be updated as the project evolves.
 *   SAQ Usage: Prioritize understanding SAQ patterns, syntax, and implementation by referencing the existing code within the `@/backend/app/worker` directory. For supplementary information, official documentation, or features not demonstrated locally, consult the official SAQ repository: `https://github.com/tobymao/saq/tree/main/saq`.
 *   Code Quality: Enforced via pre-commit hooks (Ruff, Black, ESLint, Prettier). [Source: README.md Sec 7]
 *   Authentication Overrides: Use SuperTokens API overrides to integrate with our database models, ensuring user data synchronization between SuperTokens and our database. [Source: backend/app/features/auth/supertokens_config.py]
+*   React State Management: Use React hooks (useState, useContext, etc.) for state management. [Source: frontend-react/src/contexts/AuthContext.tsx]
 
 ## Architectural Patterns
 
@@ -30,19 +31,29 @@ It is optional, but recommended to be updated as the project evolves.
 *   Configuration Management: Primarily via environment variables (local via `.env`, deployed via platform secrets). [Source: README.md Sec 7]
 *   Authentication Architecture: Using SuperTokens Managed Service with a two-tier approach - SuperTokens for auth management and our database for user data, linked via `supertokens_user_id`. [Source: backend/app/features/auth/supertokens_config.py]
 *   API Protection: Using SuperTokens session verification as a FastAPI dependency to protect routes. [Source: backend/app/api/routers/agent.py]
+*   Docker-Based Development & Deployment: Using Docker Compose for consistent local environments and deployment. [Source: docker-compose.yaml]
 
 ## Frontend Patterns
 
-*   Authentication UI: Using SuperTokens pre-built UI components via catch-all routes for authentication flows. [Source: frontend/src/routes/auth/[[...path]]/+page.svelte]
-*   API Client: Wrapping fetch calls with SuperTokens Session.fetch to automatically handle authentication tokens. [Source: frontend/src/lib/services/apiClient.ts]
-*   Authentication State: Checking authentication status on component mount and updating UI accordingly. [Source: frontend/src/routes/+layout.svelte]
-*   Protected Routes: Client-side route protection by checking authentication status and redirecting if not authenticated. [Source: frontend/src/routes/dashboard/+page.svelte]
+*   React Version: Using React 19.1 for modern React features and performance improvements. [Source: frontend-react/package.json]
+*   Component Library: Using Mantine 7.17.4 (https://mantine.dev/) for UI components to maintain consistent design. [Source: frontend-react/package.json]
+*   Styling: Using Mantine's styling system with CSS-in-JS approach. [Source: frontend-react/src/main.tsx]
+*   Theming: Centralizing theme configuration using Mantine's createTheme function. [Source: frontend-react/src/main.tsx]
+*   Form Handling: Using Mantine Form (useForm) for form state management, validation, and submission. [Source: frontend-react/src/pages/auth/*.tsx]
+*   Authentication: Using SuperTokens Auth React SDK directly for authentication flows. [Source: frontend-react/src/config/supertokens.ts]
+*   Authentication UI: Custom authentication components built with Mantine UI components. [Source: frontend-react/src/pages/auth/*.tsx]
+*   API Client: Using standard fetch-based API service with authentication token handling. [Source: frontend-react/src/services/apiService.ts]
+*   Protected Routes: Client-side route protection using a ProtectedRoute component that checks authentication status. [Source: frontend-react/src/routes/index.tsx]
+*   Context API: Using React Context API for global state management (e.g., authentication state). [Source: frontend-react/src/contexts/AuthContext.tsx]
+*   TypeScript Integration: Strong typing throughout the application with proper environment variable declarations. [Source: frontend-react/src/vite-env.d.ts]
 
 ## Testing Patterns
 
 *   Backend Testing: Unit/integration tests using `pytest`. [Source: backend/README.md Sec Testing]
 *   Frontend Testing: Framework/details likely in `frontend/README.md`. [Source: README.md Sec 5, 7]
+*   React Frontend Testing: Using Vitest for unit tests and Playwright for end-to-end tests. [Source: frontend-react/package.json]
 *   CI Integration: Automated test execution via CI pipelines (e.g., GitHub Actions). [Source: README.md Sec 7]
 
-[2025-04-17 09:09:12] - Added SAQ usage guideline and updated patterns based on READMEs.
+[2025-04-18 09:29:10] - Added React 19.1, Mantine 7.17.4, and SuperTokens Auth React frontend patterns.
 [2025-04-17 12:34:00] - Added authentication patterns for both backend and frontend.
+[2025-04-17 09:09:12] - Added SAQ usage guideline and updated patterns based on READMEs.

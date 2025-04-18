@@ -1,7 +1,7 @@
 # Progress
 
 This file tracks the project's progress using a task list format.
-2025-04-17 08:55:41 - Log of updates made (Added Postponed section, broke down large tasks).
+2025-04-18 09:27:35 - Log of updates made (Added frontend React rearchitecture with React 19.1, Mantine 7.17.4, and SuperTokens Auth React).
 
 *
 
@@ -32,6 +32,18 @@ This file tracks the project's progress using a task list format.
   * **4a-8:** Add login/logout functionality to the main layout.
   * **4a-9:** Create protected dashboard page that requires authentication.
   * **4a-10:** Document authentication architecture in Memory Bank.
+* **6a-1 Frontend Interface (PoC):** Setup basic SvelteKit routing for PoC views (Login, Main Chat).
+* **6a-2 Frontend Interface (PoC):** Implement Login form UI component (Svelte).
+* **6a-5 Frontend Interface (PoC):** Connect Login form UI (6a-2) to Auth API endpoints (4a) via FE API service (6a-4).
+* **11a Frontend React Architecture:** Implement React 19.1 and Mantine 7.17.4 with improved SuperTokens Auth React integration.
+  * **11a-1:** Update package.json with React 19.1, Mantine 7.17.4, and remove supertokens-web-js.
+  * **11a-2:** Update SuperTokens configuration to use modern patterns from auth-react documentation.
+  * **11a-3:** Configure Mantine 7.17.4 theme with the new provider syntax in main.tsx.
+  * **11a-4:** Update Vite environment type definitions for better TypeScript support.
+  * **11a-5:** Refactor LoginPage to use direct supertokens-auth-react functions.
+  * **11a-6:** Refactor SignupPage to use direct supertokens-auth-react functions.
+  * **11a-7:** Create installation script for dependency management.
+  * **11a-8:** Document React frontend rearchitecture in Memory Bank.
 
 ## Current Tasks
 
@@ -44,11 +56,8 @@ This file tracks the project's progress using a task list format.
 * **5d-3 AI Core (Haystack & LLM Gateway):** Implement `verify_fact` Haystack tool (PoC version using Gateway).
 * **5e AI Core (Haystack & LLM Gateway):** Implement Basic Human-in-Loop Flow Logic for one step (e.g., Research Approval, using Agent State).
 * **5f AI Core (Haystack & LLM Gateway):** Implement Basic Agent Error Handling & Reporting (Log errors, return simple error structure via API).
-* **6a-1 Frontend Interface (PoC):** Setup basic SvelteKit routing for PoC views (Login, Main Chat).
-* **6a-2 Frontend Interface (PoC):** Implement Login form UI component (Svelte).
 * **6a-3 Frontend Interface (PoC):** Implement basic Chat interface UI component (Svelte: input field, message display area).
 * **6a-4 Frontend Interface (PoC):** Implement basic API connection logic/service in Frontend (e.g., using fetch).
-* **6a-5 Frontend Interface (PoC):** Connect Login form UI (6a-2) to Auth API endpoints (4a) via FE API service (6a-4).
 * **6a-6 Frontend Interface (PoC):** Connect Chat interface UI (6a-3) to Agent API endpoint (4b) via FE API service (6a-4).
 * **6a-7 Frontend Interface (PoC):** Implement basic UI element/flow for Human-in-Loop step (Task 5e).
 * **7a-1 Background Processing (SAQ) - Task Impl:** Define SAQ task signature for YT ingestion.
@@ -61,15 +70,33 @@ This file tracks the project's progress using a task list format.
 * **8a AI Core - Feature Impl:** Implement Basic Creator DNA Tool Logic (Analyze transcript via Gateway -> basic style notes) using Haystack Tool structure (integrate with 5d).
 * **9a Observability & Operations (POC):** Ensure basic stdout logging is functional and rely on Portkey.ai dashboard for LLM call visibility.
 * **9b Observability & Operations (POC):** Define & Manually Test PoC End-to-End Flow using Frontend (Task 6a).
+* **10b Frontend UI Enhancement:** Add TypeScript type definitions for Flowbite Svelte components.
+* **10c Frontend UI Enhancement:** Implement end-to-end tests for authentication flows using Playwright.
+* **11a-9 Frontend React Rearchitecture:** Run npm install to resolve dependencies and fix TypeScript errors.
+* **11a-10 Frontend React Rearchitecture:** Test the updated React frontend and fix any runtime issues.
 
+* **12a Troubleshooting:** Fix SuperTokens frontend redirect 404 error by changing `websiteBasePath` to `/auth/login` in config.
+* **[DONE] 12b Troubleshooting:** Refine proxy: Modify Nginx `/auth/` for CORS only, add Vite `/auth` proxy.
+
+
+* **[DONE] 12c Troubleshooting:** Fix 500 error on `/api/user/profile` (SQLAlchemy mapper init errors due to missing `foreign()` annotations).
+* **[DONE] 12d Troubleshooting:** Fix 500 error on `/api/user/profile` (Missing `supertokens_user_id` column in DB - generated/applied Alembic migration).
+* **[DONE] 12e Troubleshooting:** Fix 404 error on `/api/user/profile` for new users (Corrected SuperTokens override DB session handling).
+* **[DONE] 13a Profile Enhancement:** Update `UserProfile` schema to include `created_at`.
 ## Postponed Tasks
 
 * **1l Foundation & Setup:** Basic Frontend Testing Setup: Setup basic testing framework for Svelte (e.g., Vitest). Write one simple component test.
 
 ## Next Steps
 
+* Complete the React frontend rearchitecture tasks (11a-9, 11a-10) by running the installation script and testing the updated application.
+* Focus on connecting the enhanced frontend UI to the backend API endpoints, particularly the agent interaction endpoints.
+* Ensure the chat interface UI uses the same design system and component patterns established with Flowbite Svelte.
 * Continue implementing the remaining "Current Tasks" sequentially or in parallel where feasible to complete the PoC phase.
 * Manually perform the E2E test (9b) once all other PoC tasks are complete.
 * Begin planning for Early MVP tasks based on the Implementation Plan.
 
-#####
+
+[2025-04-18 13:40:01] - **Task Started:** Debug signup failure (400 error, 'too many formFields').
+[2025-04-18 13:45:38] - **Task Progress:** Diagnosed form field mismatch between frontend and backend SuperTokens config. Applied fix to `backend/app/features/auth/supertokens_config.py` using `write_to_file`.
+[2025-04-18 13:50:27] - **Task Status:** Signup issue **FIXED**. Backend requires rebuild and restart. Signup requires re-testing to confirm.
