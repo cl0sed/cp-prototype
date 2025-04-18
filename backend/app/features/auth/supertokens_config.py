@@ -74,7 +74,9 @@ def override_email_password_apis(original_implementation: APIInterface) -> APIIn
         # If signup was successful, sync with our DB
         if response.status == "OK":
             email = next((f.value for f in form_fields if f.id == "email"), None)
-            if email:
+            # Extract username as well
+            username = next((f.value for f in form_fields if f.id == "username"), None)
+            if email:  # Keep check for email as it's mandatory
                 supertokens_user_id = response.user.id
                 # Manually create session scope for DB operations
                 async with async_session_factory() as db_session:
@@ -102,8 +104,11 @@ def override_email_password_apis(original_implementation: APIInterface) -> APIIn
                             # else: user already correctly linked, do nothing
                         else:
                             # Create new user if not found
+                            # Include username when creating the user
                             new_user = User(
-                                email=email, supertokens_user_id=supertokens_user_id
+                                email=email,
+                                supertokens_user_id=supertokens_user_id,
+                                username=username,  # Add username here
                             )
                             db_session.add(new_user)
                             await db_session.commit()

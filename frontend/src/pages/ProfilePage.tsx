@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import {
   Paper,
   Title,
@@ -17,7 +18,7 @@ import {
 } from '@mantine/core';
 import { IconPencil, IconKey, IconAlertCircleFilled } from '@tabler/icons-react';
 import { useSessionContext } from 'supertokens-auth-react/recipe/session';
-import EmailPassword from 'supertokens-auth-react/recipe/emailpassword';
+import { signOut } from 'supertokens-auth-react/recipe/emailpassword';
 import { apiService, ApiError } from '@/services/apiService'; // Use alias for import
 
 // Define the expected shape of profile data from the backend
@@ -32,6 +33,7 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true); // Component-level loading state for the API call
   const [error, setError] = useState<string | null>(null);
   const sessionContext = useSessionContext(); // Use the hook
+  const navigate = useNavigate(); // Call the hook
 
   useEffect(() => {
     // Only proceed if session context is done loading
@@ -43,8 +45,14 @@ const ProfilePage: React.FC = () => {
 
         // Fetch profile data from backend endpoint
         apiService.get<UserProfileData>('/api/user/profile') // Use apiService instance
-          .then((data: UserProfileData) => { // Add type for data
-            setProfileData(data);
+          .then((data: UserProfileData | null) => { // Accept null
+            if (data) { // Check if data is not null
+              setProfileData(data);
+            } else {
+              // Handle the case where data is null, maybe set an error or default state
+              console.error("Received null profile data from API");
+              setError('Failed to load profile data (received null).');
+            }
           })
           .catch((err: Error | ApiError) => { // Add type for err
             console.error("Error fetching profile:", err);
@@ -61,20 +69,23 @@ const ProfilePage: React.FC = () => {
     // Depend on the entire sessionContext object or specific fields if preferred and stable
   }, [sessionContext]); // Using the whole context object is often safer
 
+  // Show loading indicator while session context is loading OR profile data is loading
+  const [isLoggingOut, setIsLoggingOut] = useState(false); // Add state for loading
+
   const handleLogout = async () => {
-    setLoading(true); // Show loading indicator during logout process
+    setIsLoggingOut(true);
     setError(null);
     try {
-      await EmailPassword.signOut();
-      // SuperTokens handles redirection after sign out.
+      await signOut();
+      navigate('/auth/login'); // Explicitly navigate after sign out
     } catch (err) {
       console.error("Logout failed:", err);
       setError("Logout failed. Please try again.");
-      setLoading(false); // Stop loading only if logout fails
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
-  // Show loading indicator while session context is loading OR profile data is loading
   if (sessionContext.loading || loading) {
     return (
       <Center style={{ height: '80vh' }}>
@@ -99,7 +110,7 @@ const ProfilePage: React.FC = () => {
       <Center style={{ height: '80vh' }}>
         <Alert icon={<IconAlertCircleFilled size={16} />} title="Error Loading Profile" color="red">
           {error}
-          <Button color="red" onClick={handleLogout} mt="md" loading={loading}>Logout</Button>
+          {/* Removed logout button from error display */}
         </Alert>
       </Center>
     );
@@ -122,7 +133,6 @@ const ProfilePage: React.FC = () => {
     <>
       <Group justify="space-between" mb="md">
         <Title order={1}>User Profile</Title>
-        <Button color="red" onClick={handleLogout} loading={loading}>Logout</Button>
       </Group>
 
       <Grid gutter="md">
@@ -158,7 +168,7 @@ const ProfilePage: React.FC = () => {
                 </Card.Section>
                 <Group mt="md" mb="xs">
                   <Text fw={500}>Username:</Text>
-                  <Text>{profileData.username || '-'}</Text>
+                  <Text>{profileData.username}</Text>
                 </Group>
                 <Group mb="xs">
                   <Text fw={500}>Email:</Text>
@@ -178,6 +188,12 @@ const ProfilePage: React.FC = () => {
           </Grid>
         </Grid.Col>
       </Grid>
+      {/* Logout Button Section */}
+      <Group justify="flex-end" mt="xl"> {/* Align button to the right */}
+        <Button color="red" onClick={handleLogout} loading={isLoggingOut}>
+          Logout
+        </Button>
+      </Group>
     </>
   );
 };

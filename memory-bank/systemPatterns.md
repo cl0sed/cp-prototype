@@ -56,8 +56,3 @@ It is optional, but recommended to be updated as the project evolves.
 *   Frontend Testing: Framework/details likely in `frontend/README.md`. [Source: README.md Sec 5, 7]
 *   React Frontend Testing: Using Vitest for unit tests and Playwright for end-to-end tests. [Source: frontend-react/package.json]
 *   CI Integration: Automated test execution via CI pipelines (e.g., GitHub Actions). [Source: README.md Sec 7]
-
-[2025-04-18 09:29:10] - Added React 19.1, Mantine 7.17.4, and SuperTokens Auth React frontend patterns.
-[2025-04-17 12:34:00] - Added authentication patterns for both backend and frontend.
-[2025-04-17 09:09:12] - Added SAQ usage guideline and updated patterns based on READMEs.
-[2025-04-18 15:23:00] - Updated frontend patterns after code review: Removed manual token handling, custom ProtectedRoute, and clarified auth state source.

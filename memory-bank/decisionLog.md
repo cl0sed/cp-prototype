@@ -136,4 +136,6 @@ This file records architectural and implementation decisions using a list format
   * Deleted `frontend-react/src/layouts/AuthLayout.tsx`.
   * Deleted `frontend-react/src/routes/ProtectedRoute.tsx`.
   * Modified `frontend-react/src/services/apiService.ts` to remove the `authToken` property, `setAuthToken` method, and the logic adding the `Authorization: Bearer` header. Adjusted return types to `Promise<T | null>` to handle empty responses correctly.
+
+[2025-04-18 16:16:00] - Added `username` field to backend `User` model and API response schema (`UserProfile`). Rationale: Required to display user-provided username on the frontend profile page. Implications: Required database migration and update to SuperTokens signup logic to save the username.
   * Deleted `frontend-react/src/services/authService.ts`.

@@ -87,6 +87,9 @@ class User(Base):
     supertokens_user_id: Mapped[Optional[str]] = mapped_column(
         String, unique=True, index=True, nullable=True
     )
+    username: Mapped[Optional[str]] = mapped_column(
+        String(50), unique=True, index=True, nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), server_default=func.now(), nullable=False, index=True
     )

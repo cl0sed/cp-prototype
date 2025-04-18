@@ -90,9 +90,7 @@ This file tracks the project's progress using a task list format.
 * Focus on connecting the enhanced frontend UI to the backend API endpoints, particularly the agent interaction endpoints.
 * Ensure the chat interface UI uses the same design system and component patterns established with Flowbite Svelte.
 * Continue implementing the remaining "Current Tasks" sequentially or in parallel where feasible to complete the PoC phase.
+
+[2025-04-18 16:16:00] - Completed: Frontend profile, header, and logout UI/UX updates (including backend changes for username display and saving).
 * Manually perform the E2E test (9b) once all other PoC tasks are complete.
 * Begin planning for Early MVP tasks based on the Implementation Plan.
-
-[2025-04-18 13:40:01] - **Task Started:** Debug signup failure (400 error, 'too many formFields').
-[2025-04-18 13:45:38] - **Task Progress:** Diagnosed form field mismatch between frontend and backend SuperTokens config. Applied fix to `backend/app/features/auth/supertokens_config.py` using `write_to_file`.
-[2025-04-18 13:50:27] - **Task Status:** Signup issue **FIXED**. Backend requires rebuild and restart. Signup requires re-testing to confirm.

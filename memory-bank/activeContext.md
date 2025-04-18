@@ -16,6 +16,14 @@
 |
 | ## Recent Changes
 |
+* [2025-04-18 16:15:00] - Completed frontend profile/header/logout updates:
+  * Backend: Added `username` field to `User` model (DB + migration), added `username` to `UserProfile` API schema.
+  * Backend: Updated SuperTokens `sign_up_post` override to save username to DB.
+  * Frontend: Profile page displays username, logout button added at bottom-right.
+  * Frontend: Header avatar acts as dropdown menu (Profile/Logout links).
+  * Frontend: Ensured immediate logout redirection from both profile page and header menu.
+  * Frontend: Fixed global CSS (`index.css`) to ensure consistent light background on all pages (including auth).
+
 | * [2025-04-18 13:02:00] - Fixed excessive dev server requests for @tabler/icons-react by adding a Vite alias to force static icon exports (`dist/esm/icons/index.mjs`).
 | * [2025-04-18 13:06:00] - Reviewed and confirmed Nginx reverse proxy (`reverse-proxy.conf`), Docker Compose setup, and backend/frontend CORS configurations.
 |
