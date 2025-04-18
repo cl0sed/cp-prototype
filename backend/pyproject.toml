@@ -47,6 +47,7 @@ dev = [
   "pyyaml>=6.0.0,<7.0.0",
   # "python-dotenv>=1.0.0,<2.0.0", # Optional: Uncomment to add
   "sqlalchemy[mypy]>=2.0.35,<2.1.0", # For SQLAlchemy 2.0 type hints
+  "watchfiles>=0.21.0,<0.22.0",      # Added for worker hot-reloading
 ]
 
 [build-system]

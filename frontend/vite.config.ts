@@ -6,7 +6,6 @@ import { dirname, resolve } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -50,10 +49,9 @@ export default defineConfig({
       '@mantine/hooks',
       '@mantine/form',
       '@mantine/notifications',
-      '@tabler/icons-react', // Keep this include, the alias handles the path
+      '@tabler/icons-react',
       'supertokens-auth-react/recipe/session',
       'supertokens-auth-react/recipe/emailpassword'
     ],
-    // No exclude needed now due to alias
   },
 });

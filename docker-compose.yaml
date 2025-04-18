@@ -71,28 +71,28 @@ services:
         condition: service_healthy
     networks:
       - app_network
-    command: saq app.worker.settings.settings
+    command: watchfiles "saq app.worker.settings.settings" /app/app
     restart: unless-stopped
 
-  frontend-react:
+  frontend:
     build:
-      context: ./frontend-react
+      context: ./frontend
       target: development
-    container_name: frontend-react
+    container_name: frontend
     working_dir: /app
     volumes:
-      - ./frontend-react:/app
+      - ./frontend:/app
       - /app/node_modules
     environment:
       - VITE_API_URL=http://localhost
       - VITE_WEBSITE_DOMAIN=http://localhost
-      - VITE_APP_NAME=AI Video Platform (React)
+      - VITE_APP_NAME=AI Video Platform
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
     networks:
       - app_network
-    command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host"
+    command: npm run dev -- --host
     restart: unless-stopped
 
   nginx:
@@ -104,7 +104,7 @@ services:
       - ./reverse-proxy.conf:/etc/nginx/conf.d/default.conf:ro
       - nginx_logs:/var/log/nginx
     depends_on:
-      - frontend-react
+      - frontend
       - backend
     networks:
       - app_network

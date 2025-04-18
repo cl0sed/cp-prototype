@@ -15,6 +15,9 @@ This file records architectural and implementation decisions using a list format
 * [2025-04-18 15:05:00] - Create `get_required_user_from_session` Dependency
 * [2025-04-18 15:10:00] - Centralize `APP_BASE_URL` in `config.py`
 
+* [2025-04-18 15:24:00] - Remove Redundant Frontend Auth Code (Layout, Route, Services)
+
+* [2025-04-18 15:33:00] - Optimize dev workflow: Added `watchfiles` for worker hot-reloading, removed redundant `npm install` from frontend command. Backend dependencies are managed with `uv` and pyproject.toml.
 ## Rationale
 * [2025-04-18 13:06:00] - Confirm Nginx Reverse Proxy and CORS Configuration
 
@@ -46,6 +49,11 @@ This file records architectural and implementation decisions using a list format
   * This allows non-OPTIONS `/auth/...` requests (API calls like `/auth/signin` and frontend routes like `/auth/login`) to fall through to the Nginx `location /` block, which correctly proxies them to the Vite dev server.
   * Adding a `/auth` proxy rule to `vite.config.ts` leverages Vite's dev server to correctly forward the SuperTokens API calls (now received via Nginx `location /`) to the backend service (`http://backend:8000`).
   * This maintains the necessary CORS fix while correctly routing frontend pages and backend API calls.
+
+
+* [2025-04-18 15:24:00] - **Remove Redundant Frontend Auth Code Rationale:**
+  * The code review identified several components and service logic (`AuthLayout.tsx`, `ProtectedRoute.tsx`, manual token handling in `apiService.ts`, most of `authService.ts`) that were either unused, non-functional (due to missing dependencies like `useAuth`), or conflicted with the primary authentication patterns established using the SuperTokens React SDK (`<SessionAuth>`, `useSessionContext`, `signIn`, `signUp`, cookie-based sessions).
+  * Removing this code simplifies the codebase, eliminates potential confusion, reduces maintenance overhead, and ensures reliance on the recommended SuperTokens SDK integration methods.
 
 ## Implementation Details
 
@@ -123,3 +131,9 @@ This file records architectural and implementation decisions using a list format
 * [2025-04-18 15:00:00] - **Standardize HTTP Status Code for "User Not Found" Error:** The code review identified inconsistent usage of HTTP status codes (404 vs 403) for the scenario where a valid SuperTokens session exists, but the corresponding user record is not found in the local database. We decided to standardize on `403 Forbidden` as it more accurately reflects the situation: the user is authenticated but not authorized to access the resource due to the missing local record. This improves consistency and provides a clearer signal to the client.
 * [2025-04-18 15:05:00] - **Create `get_required_user_from_session` Dependency:** The code review identified duplicated logic in the API routers for fetching the user based on the SuperTokens session ID and handling the "user not found" error. To address this, we created a new FastAPI dependency, `get_required_user_from_session`, in `features/auth/supertokens_config.py`. This dependency encapsulates the user fetching logic and raises an `HTTPException(403)` if the user is not found, simplifying the router code and ensuring consistency.
 * [2025-04-18 15:10:00] - **Centralize `APP_BASE_URL` in `config.py`:** The code review identified a hardcoded `PROXY_ADDRESS` in `features/auth/supertokens_config.py`. To improve maintainability and configuration management, we moved this value to `config.py` as `APP_BASE_URL` and updated `supertokens_config.py` to use `settings.APP_BASE_URL`.
+
+* [2025-04-18 15:24:00] - **Remove Redundant Frontend Auth Code Implementation:**
+  * Deleted `frontend-react/src/layouts/AuthLayout.tsx`.
+  * Deleted `frontend-react/src/routes/ProtectedRoute.tsx`.
+  * Modified `frontend-react/src/services/apiService.ts` to remove the `authToken` property, `setAuthToken` method, and the logic adding the `Authorization: Bearer` header. Adjusted return types to `Promise<T | null>` to handle empty responses correctly.
+  * Deleted `frontend-react/src/services/authService.ts`.

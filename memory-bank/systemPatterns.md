@@ -44,9 +44,10 @@ It is optional, but recommended to be updated as the project evolves.
 *   Form Handling: Using Mantine Form (useForm) for form state management, validation, and submission. [Source: frontend-react/src/pages/auth/*.tsx]
 *   Authentication: Using SuperTokens Auth React SDK directly for authentication flows. [Source: frontend-react/src/config/supertokens.ts]
 *   Authentication UI: Custom authentication components built with Mantine UI components. [Source: frontend-react/src/pages/auth/*.tsx]
-*   API Client: Using standard fetch-based API service with authentication token handling. [Source: frontend-react/src/services/apiService.ts]
-*   Protected Routes: Client-side route protection using a ProtectedRoute component that checks authentication status. [Source: frontend-react/src/routes/index.tsx]
-*   Context API: Using React Context API for global state management (e.g., authentication state). [Source: frontend-react/src/contexts/AuthContext.tsx]
+*   API Client: Using standard fetch-based API service relying on browser cookie handling (`credentials: 'include'`). [Source: frontend-react/src/services/apiService.ts]
+*   Protected Routes: Client-side route protection using SuperTokens SessionAuth component. [Source: frontend-react/src/routes/index.tsx]
+*   Authentication State: Primarily managed via SuperTokens `useSessionContext` hook. [Source: frontend-react/src/layouts/MainLayout.tsx]
+*   Context API: Potentially used for non-auth global state management if needed.
 *   TypeScript Integration: Strong typing throughout the application with proper environment variable declarations. [Source: frontend-react/src/vite-env.d.ts]
 
 ## Testing Patterns
@@ -59,3 +60,4 @@ It is optional, but recommended to be updated as the project evolves.
 [2025-04-18 09:29:10] - Added React 19.1, Mantine 7.17.4, and SuperTokens Auth React frontend patterns.
 [2025-04-17 12:34:00] - Added authentication patterns for both backend and frontend.
 [2025-04-17 09:09:12] - Added SAQ usage guideline and updated patterns based on READMEs.
+[2025-04-18 15:23:00] - Updated frontend patterns after code review: Removed manual token handling, custom ProtectedRoute, and clarified auth state source.
