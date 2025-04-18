@@ -12,6 +12,7 @@ This file tracks the project's current status, including recent changes, current
 * [2025-04-17 12:35:00] - Implementing authentication using SuperTokens (Task 4a). We've successfully integrated SuperTokens Managed Service for authentication in both the backend and frontend. The implementation includes user sign-up, sign-in, sign-out, session management, and API protection. We've also created a protected dashboard page and updated the API client to handle authentication tokens.
 
 * [2025-04-18 13:14:20] - Troubleshooting SuperTokens frontend redirect issue: App redirects to `/auth/?redirectToPath=%2Fprofile` causing a 404 because no route exists for `/auth` itself, only `/auth/login` and `/auth/signup`.
+* [2025-04-18 15:15:00] - Completed backend code review and implemented refactoring based on findings.
 
 ## Recent Changes
 
@@ -39,6 +40,14 @@ This file tracks the project's current status, including recent changes, current
 * [2025-04-17 12:35:00] - Added login/logout functionality to the main layout.
 * [2025-04-17 12:35:00] - Created protected dashboard page that requires authentication.
 * [2025-04-17 12:35:00] - Documented authentication architecture in Memory Bank.
+* [2025-04-18 15:15:00] - Standardized HTTP status code to 403 for "user not found" errors in `api/routers/user.py`.
+* [2025-04-18 15:15:00] - Created `get_required_user_from_session` dependency in `features/auth/supertokens_config.py` to centralize user fetching and error handling.
+* [2025-04-18 15:15:00] - Refactored `api/routers/user.py` and `api/routers/agent.py` to use `get_required_user_from_session`.
+* [2025-04-18 15:15:00] - Added `APP_BASE_URL` setting to `config.py`.
+* [2025-04-18 15:15:00] - Removed hardcoded `PROXY_ADDRESS` from `features/auth/supertokens_config.py` and replaced with `settings.APP_BASE_URL`.
+* [2025-04-18 15:15:00] - Added `AgentInteractionResponse` Pydantic model to `api/routers/agent.py`.
+* [2025-04-18 15:15:00] - Corrected database queries in `features/auth/supertokens_config.py` to use ORM `select(User)` instead of `User.__table__.select()` to fix serialization errors.
+* [2025-04-18 15:15:00] - Updated `features/auth/__init__.py` to export `get_required_user_from_session`.
 
 ## Open Questions/Issues
 

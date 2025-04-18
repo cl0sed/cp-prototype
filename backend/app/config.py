@@ -64,6 +64,10 @@ class Settings(BaseSettings):
     # Load from env/.env, default to '*' for development ease. Restrict in production.
     FORWARDED_ALLOW_IPS: str = Field(default="*")
 
+    # --- Application URLs ---
+    # Base URL for the application (used for SuperTokens configuration)
+    APP_BASE_URL: str = Field(default="http://localhost")
+
     # Compute the CORS_ALLOWED_ORIGINS list from the string
     @computed_field
     def CORS_ALLOWED_ORIGINS(self) -> List[str]:

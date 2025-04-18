@@ -11,6 +11,7 @@ from .supertokens_config import (
     get_user_id,
     get_user_from_session,
     add_db_context_to_request,
+    get_required_user_from_session,  # Added new dependency
 )
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "get_user_id",
     "get_user_from_session",
     "add_db_context_to_request",
+    "get_required_user_from_session",  # Added new dependency
 ]

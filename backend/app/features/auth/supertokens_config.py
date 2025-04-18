@@ -7,8 +7,9 @@ following the project's async-first architecture.
 
 from typing import Dict, Any, List, Optional, Union
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select  # Import select
 from supertokens_python import init, InputAppInfo, SupertokensConfig
 from supertokens_python.framework.fastapi import get_middleware
 from supertokens_python.recipe import session, emailpassword
@@ -27,18 +28,17 @@ from app.db.session import (
 )  # Ensure async_session_factory is imported
 from app.db.models import User
 
-# Define the proxy address (used for both apiDomain and websiteDomain now)
-PROXY_ADDRESS = "http://localhost"  # Accessed via Nginx on port 80
+# Use APP_BASE_URL from settings instead of hardcoding the proxy address
 
 
 def get_api_domain() -> str:
-    """Get the API domain (now the proxy address)."""
-    return PROXY_ADDRESS
+    """Get the API domain from settings."""
+    return settings.APP_BASE_URL
 
 
 def get_website_domain() -> str:
-    """Get the website domain (now the proxy address)."""
-    return PROXY_ADDRESS
+    """Get the website domain from settings."""
+    return settings.APP_BASE_URL
 
 
 def get_app_name() -> str:
@@ -79,9 +79,9 @@ def override_email_password_apis(original_implementation: APIInterface) -> APIIn
                 # Manually create session scope for DB operations
                 async with async_session_factory() as db_session:
                     try:
-                        result = await db_session.execute(
-                            User.__table__.select().where(User.email == email)
-                        )
+                        # Use ORM select
+                        stmt = select(User).where(User.email == email)
+                        result = await db_session.execute(stmt)
                         existing_user = result.scalar_one_or_none()
                         if existing_user:
                             # Link existing user if found by email
@@ -143,20 +143,20 @@ def override_email_password_apis(original_implementation: APIInterface) -> APIIn
                 # Manually create session scope for DB operations
                 async with async_session_factory() as db_session:
                     try:
-                        result = await db_session.execute(
-                            User.__table__.select().where(
-                                User.supertokens_user_id == supertokens_user_id
-                            )
+                        # Use ORM select
+                        stmt = select(User).where(
+                            User.supertokens_user_id == supertokens_user_id
                         )
+                        result = await db_session.execute(stmt)
                         existing_user = result.scalar_one_or_none()
                         if not existing_user:
                             # Attempt to link by email if ST ID match failed
-                            result_email = await db_session.execute(
-                                User.__table__.select().where(
-                                    User.email == email,
-                                    User.supertokens_user_id.is_(None),
-                                )
+                            # Use ORM select
+                            stmt_email = select(User).where(
+                                User.email == email,
+                                User.supertokens_user_id.is_(None),
                             )
+                            result_email = await db_session.execute(stmt_email)
                             email_user = result_email.scalar_one_or_none()
                             if email_user:
                                 email_user.supertokens_user_id = supertokens_user_id
@@ -193,8 +193,8 @@ def init_supertokens(app: FastAPI) -> None:
     init(
         app_info=InputAppInfo(
             app_name=get_app_name(),
-            api_domain=get_api_domain(),  # Use proxy address
-            website_domain=get_website_domain(),  # Use proxy address
+            api_domain=get_api_domain(),  # Use APP_BASE_URL from settings
+            website_domain=get_website_domain(),  # Use APP_BASE_URL from settings
             api_base_path="/auth",  # Reverted base path
             website_base_path="/auth",  # Reverted base path
         ),
@@ -237,17 +237,54 @@ async def get_user_id(session_container: SessionContainer) -> str:
 
 
 async def get_user_from_session(
-    session_container: SessionContainer,
+    session_container: SessionContainer = Depends(
+        session_verifier
+    ),  # Added Depends here for clarity
     db_session: AsyncSession = Depends(get_db_session),
 ) -> Optional[User]:
     """Get the User model instance associated with the current session."""
     supertokens_user_id = session_container.get_user_id()
-    result = await db_session.execute(
-        User.__table__.select().where(User.supertokens_user_id == supertokens_user_id)
-    )
+    # Use ORM select
+    stmt = select(User).where(User.supertokens_user_id == supertokens_user_id)
+    result = await db_session.execute(stmt)
     return result.scalar_one_or_none()
 
 
 async def add_db_context_to_request(db_session: AsyncSession = Depends(get_db_session)):
     """A FastAPI dependency that adds the database session to the user_context."""
     return {"db_session": db_session}
+
+
+# Corrected implementation: Depends directly on session_verifier and get_db_session
+async def get_required_user_from_session(
+    session_container: SessionContainer = Depends(session_verifier),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> User:
+    """
+    Get the User model instance associated with the current session.
+    Raises HTTPException(403) if user is not found in the database.
+
+    This dependency combines fetching the user and handling the common error case
+    where a valid session exists but no corresponding user record is found in the DB.
+
+    Usage in FastAPI:
+    ```
+    @app.get("/protected-endpoint")
+    async def protected_endpoint(user: User = Depends(get_required_user_from_session)):
+        # No need to check if user exists - it's guaranteed or an exception is raised
+        return {"user_id": str(user.id)}
+    ```
+    """
+    supertokens_user_id = session_container.get_user_id()
+    # Use ORM select
+    stmt = select(User).where(User.supertokens_user_id == supertokens_user_id)
+    result = await db_session.execute(stmt)
+    user = result.scalar_one_or_none()
+
+    if not user:
+        # Log the warning as well
+        print(
+            f"WARNING: Valid session for ST ID {supertokens_user_id} but no matching user in DB."
+        )
+        raise HTTPException(status_code=403, detail="User not found in database")
+    return user

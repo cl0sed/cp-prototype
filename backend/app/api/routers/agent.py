@@ -5,12 +5,18 @@ This module contains routes for interacting with the AI agent.
 These routes are protected by authentication.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from supertokens_python.recipe.session import SessionContainer
+from fastapi import APIRouter, Depends
+from app.db.models import User
+from app.features.auth import get_required_user_from_session
+from pydantic import BaseModel
 
-from app.db.session import get_db_session
-from app.features.auth import session_verifier, get_user_from_session
+
+# Define a response model for the agent interaction
+class AgentInteractionResponse(BaseModel):
+    message: str
+    user_email: str
+    user_id: str
+
 
 router = APIRouter(
     prefix="/agent",
@@ -22,10 +28,9 @@ router = APIRouter(
 )
 
 
-@router.get("/interact", response_model=dict)
+@router.get("/interact", response_model=AgentInteractionResponse)
 async def agent_interact(
-    session: SessionContainer = Depends(session_verifier),
-    db: AsyncSession = Depends(get_db_session),
+    user: User = Depends(get_required_user_from_session),
 ):
     """
     Test endpoint for agent interaction.
@@ -33,18 +38,11 @@ async def agent_interact(
 
     In a real implementation, this would handle the interaction with the AI agent.
     """
-    # Get the user from the session
-    user = await get_user_from_session(session, db)
-
-    if not user:
-        raise HTTPException(
-            status_code=403,
-            detail="User not found in database",
-        )
+    # No need to check if user exists - the dependency handles that
 
     # For now, just return a simple response
-    return {
-        "message": "Authentication successful",
-        "user_email": user.email,
-        "user_id": str(user.id),
-    }
+    return AgentInteractionResponse(
+        message="Authentication successful",
+        user_email=user.email,
+        user_id=str(user.id),
+    )

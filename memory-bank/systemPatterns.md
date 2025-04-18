@@ -30,7 +30,9 @@ It is optional, but recommended to be updated as the project evolves.
 *   Deployment Target: Container-based PaaS. [Source: README.md Sec 6.a]
 *   Configuration Management: Primarily via environment variables (local via `.env`, deployed via platform secrets). [Source: README.md Sec 7]
 *   Authentication Architecture: Using SuperTokens Managed Service with a two-tier approach - SuperTokens for auth management and our database for user data, linked via `supertokens_user_id`. [Source: backend/app/features/auth/supertokens_config.py]
+*   Centralized Base URL Configuration: Using `settings.APP_BASE_URL` from `config.py` for all application URLs (e.g., SuperTokens configuration). [Source: backend/app/features/auth/supertokens_config.py, backend/app/config.py]
 *   API Protection: Using SuperTokens session verification as a FastAPI dependency to protect routes. [Source: backend/app/api/routers/agent.py]
+*   Required User Dependency: Using `get_required_user_from_session` to ensure a valid user exists for authenticated endpoints. [Source: backend/app/features/auth/supertokens_config.py, backend/app/api/routers/agent.py, backend/app/api/routers/user.py]
 *   Docker-Based Development & Deployment: Using Docker Compose for consistent local environments and deployment. [Source: docker-compose.yaml]
 
 ## Frontend Patterns

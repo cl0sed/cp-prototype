@@ -44,6 +44,7 @@ This file tracks the project's progress using a task list format.
   * **11a-6:** Refactor SignupPage to use direct supertokens-auth-react functions.
   * **11a-7:** Create installation script for dependency management.
   * **11a-8:** Document React frontend rearchitecture in Memory Bank.
+* [2025-04-18 15:15:00] - Completed backend code review and implemented all recommended refactoring and configuration changes.
 
 ## Current Tasks
 
@@ -75,14 +76,6 @@ This file tracks the project's progress using a task list format.
 * **11a-9 Frontend React Rearchitecture:** Run npm install to resolve dependencies and fix TypeScript errors.
 * **11a-10 Frontend React Rearchitecture:** Test the updated React frontend and fix any runtime issues.
 
-* **12a Troubleshooting:** Fix SuperTokens frontend redirect 404 error by changing `websiteBasePath` to `/auth/login` in config.
-* **[DONE] 12b Troubleshooting:** Refine proxy: Modify Nginx `/auth/` for CORS only, add Vite `/auth` proxy.
-
-
-* **[DONE] 12c Troubleshooting:** Fix 500 error on `/api/user/profile` (SQLAlchemy mapper init errors due to missing `foreign()` annotations).
-* **[DONE] 12d Troubleshooting:** Fix 500 error on `/api/user/profile` (Missing `supertokens_user_id` column in DB - generated/applied Alembic migration).
-* **[DONE] 12e Troubleshooting:** Fix 404 error on `/api/user/profile` for new users (Corrected SuperTokens override DB session handling).
-* **[DONE] 13a Profile Enhancement:** Update `UserProfile` schema to include `created_at`.
 ## Postponed Tasks
 
 * **1l Foundation & Setup:** Basic Frontend Testing Setup: Setup basic testing framework for Svelte (e.g., Vitest). Write one simple component test.
@@ -95,7 +88,6 @@ This file tracks the project's progress using a task list format.
 * Continue implementing the remaining "Current Tasks" sequentially or in parallel where feasible to complete the PoC phase.
 * Manually perform the E2E test (9b) once all other PoC tasks are complete.
 * Begin planning for Early MVP tasks based on the Implementation Plan.
-
 
 [2025-04-18 13:40:01] - **Task Started:** Debug signup failure (400 error, 'too many formFields').
 [2025-04-18 13:45:38] - **Task Progress:** Diagnosed form field mismatch between frontend and backend SuperTokens config. Applied fix to `backend/app/features/auth/supertokens_config.py` using `write_to_file`.
