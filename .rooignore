@@ -1,0 +1,110 @@
+# .rooignore
+# This file tells Roo Code which files and directories to ignore.
+# Useful for excluding large, irrelevant, or sensitive files to save tokens
+# and improve context quality. Syntax is similar to .gitignore.
+
+# Version Control
+.git/
+
+# Dependencies (Usually very large and not needed for code context)
+node_modules/
+venv/
+.venv/
+env/
+*/env/
+*/venv/
+*/.venv/
+
+# Python specific cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# Python distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+wheels/
+sdist/
+pip-wheel-metadata/
+share/python-wheels/
+
+# Python testing artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+pytestdebug.log
+
+# Python type checking cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# Frontend specific (SvelteKit / Node.js)
+.svelte-kit/ # SvelteKit build output and cache
+# build/ # Often used for frontend build output (redundant if Python build/ is already ignored)
+# package-lock.json # Can be large and change often, sometimes useful context, ignore to save tokens
+# yarn.lock # Same as above
+# pnpm-lock.yaml # Same as above
+
+# Secrets & Environment Variables (CRITICAL - Never include secrets in context)
+.env
+*.env.*
+!.env.example # Keep example files as they show structure
+# backend/.env # Explicitly ignore backend env if separate [cite: 186]
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# IDE / Editor specific configuration
+.vscode/ # Ignore VS Code settings unless specific settings ARE context
+.idea/ # JetBrains IDEs
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store # macOS
+Thumbs.db # Windows
+ehthumbs.db # Windows
+
+# Temporary files
+*~
+*.swp
+*.swo
+
+# Downloaded AI Models (If applicable and large)
+# backend/models/ # Uncomment if you store large models locally [cite: 141]
+
+# Other Build Artifacts / Output
+out/
+tmp/
+temp/
+
+# Archives
+*.zip
+*.tar.*
+*.gz
+*.rar
+*.7z
+
+# Instance folder (Flask specific, but good general practice)
+instance/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ruff cache
+.ruff_cache/
+
+# Pyright cache
+.pyright_cache/
