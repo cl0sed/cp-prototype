@@ -13,6 +13,16 @@ It is optional, but recommended to be updated as the project evolves.
 *   Code Quality: Enforced via pre-commit hooks (Ruff, Black, ESLint, Prettier). [Source: README.md Sec 7]
 *   Authentication Overrides: Use SuperTokens API overrides to integrate with our database models, ensuring user data synchronization between SuperTokens and our database. [Source: backend/app/features/auth/supertokens_config.py]
 *   React State Management: Use React hooks (useState, useContext, etc.) for state management. [Source: frontend-react/src/contexts/AuthContext.tsx]
+*   Custom Haystack Components: Define custom components using the `@component` decorator and subclassing `haystack.core.component.Component` to wrap external libraries or custom logic within the Haystack pipeline framework.
+*   Use Cached `Settings` object through `get_settings` instead of accessing the `Settings` directly.
+*   Store feature-specific prompts in `features/.../prompts/{prompt_name}/{version}.ext`, shared prompts in `shared/prompts/{prompt_name}/{version}.j2`
+*   Store feature-specific tools in `features/.../tools.py` and shared tools in `shared/tools/... .py`
+*   Versioning pattern for prompts: `{prompt_name}/{version}.j2` within the respective prompts directory.
+*   Prompt and Tool Versioning: Prompts and tools are versioned in Git, activated via pipeline tags (default or override), configured via `pipeline-tags.yaml` with a fallback to `DEFAULT_PROMPT_VERSION`, and managed by `PromptService`. Startup validation ensures config integrity and file existence for default tags.
+*   Message Content Access: Use `.text` to access the main textual content of a Haystack `ChatMessage` object. Use `.content` to access the main textual content of a database `ChatMessage` model object. Be mindful of which object type you are working with. [2025-04-21 13:08:50]
+
+*   Logging Standard: Use `logging.getLogger(__name__)` to obtain a named logger instance in each module. Use appropriate logging levels (`debug`, `info`, `warning`, `error`, `critical`, `exception`). Ensure log messages are clear, concise, and do not include the log level in the message text. Use `logger.exception()` to log exceptions with traceback. Avoid `print()` for log output.
+*   Comment Standard: Use docstrings for modules, classes, and functions to explain their purpose. Use inline comments sparingly to clarify complex or non-obvious code. Remove unnecessary, redundant, self-explanatory, or excessive comments (including commented-out file paths). Clearly mark temporary or incomplete code with comments like `# TODO` or by commenting out blocks.
 
 ## Architectural Patterns
 
@@ -31,6 +41,10 @@ It is optional, but recommended to be updated as the project evolves.
 *   API Protection: Using SuperTokens session verification as a FastAPI dependency to protect routes. [Source: backend/app/api/routers/agent.py]
 *   Required User Dependency: Using `get_required_user_from_session` to ensure a valid user exists for authenticated endpoints. [Source: backend/app/features/auth/supertokens_config.py, backend/app/api/routers/agent.py, backend/app/api/routers/user.py]
 *   Docker-Based Development & Deployment: Using Docker Compose for consistent local environments and deployment. [Source: docker-compose.yaml]
+*   Atomic Database Models: Organizing SQLAlchemy models into separate, domain-specific files within `backend/app/db/models/` for improved structure and maintainability.
+*   Alembic Migration Dependency Resolution: Leveraging Alembic's built-in dependency analysis supplemented by `use_alter=True` on specific foreign keys to handle circular dependencies during schema creation.
+*   Programmatic Migration Customization: Utilizing the `alembic.env.py` `process_revision_directives` hook to automatically include necessary database commands (e.g., `CREATE EXTENSION`) in generated migration scripts, avoiding manual editing.
+*   Centralized Model Registration: Importing all SQLAlchemy models in `backend/app/db/models/__init__.py` to ensure Alembic's metadata is fully populated for autogenerate.
 
 ## Frontend Patterns
 
@@ -46,10 +60,34 @@ It is optional, but recommended to be updated as the project evolves.
 *   Authentication State: Primarily managed via SuperTokens `useSessionContext` hook. [Source: frontend-react/src/layouts/MainLayout.tsx]
 *   Context API: Potentially used for non-auth global state management if needed.
 *   TypeScript Integration: Strong typing throughout the application with proper environment variable declarations. [Source: frontend-react/src/vite-env.d.ts]
+*   Frontend Component Typing: Use TypeScript interfaces to define props and state for React components, ensuring type safety and improving component usage clarity.
 
 ## Testing Patterns
 
 *   Backend Testing: Unit/integration tests using `pytest`. [Source: backend/README.md Sec Testing]
 *   Frontend Testing: Framework/details likely in `frontend/README.md`. [Source: README.md Sec 5, 7]
 *   React Frontend Testing: Using Vitest for unit tests and Playwright for end-to-end tests. [Source: frontend-react/package.json]
-*   CI Integration: Automated test execution via CI pipelines (e.g., GitHub Actions). [Source: README.md Sec 7]
+
+### Backend Shared Components (`backend/app/shared/`)
+
+**Purpose:**
+The `backend/app/shared/` directory is designated for common, reusable components that are not tightly coupled to any single feature or domain within the backend application. These components provide foundational utilities, definitions, and interfaces used across multiple parts of the system.
+
+**Structure:**
+The `shared/` directory is organized into subdirectories based on the type of component:
+- `clients/`: External service client instances or client-related code.
+- `constants/`: Static constant values and enumerations (Enums).
+- `exceptions/`: Custom exception classes used application-wide.
+- `schemas/`: Pydantic models representing core internal data structures (distinct from API or DB models).
+- `utils/`: General-purpose helper functions.
+
+**Criteria for Inclusion:**
+- The component must be genuinely reusable by two or more distinct features or layers of the application.
+- It should not contain business logic specific to a single feature.
+- It should be relatively stable and not frequently change based on feature requirements.
+
+**Python Package Pattern:**
+Each subdirectory within `shared/` is treated as a Python package. Code is typically placed in a module file within the subdirectory (e.g., `exceptions.py` in `exceptions/`). An `__init__.py` file in the subdirectory is used to selectively import and re-export the public items from the module file(s), providing a clean import interface.
+
+**Import Style:**
+Components from `shared/` should be imported using the pattern `from app.shared.<subdirectory> import <ItemName>`. Avoid importing directly from module files within the subdirectories (e.py., `from app.shared.exceptions.exceptions import ...`).

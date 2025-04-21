@@ -1,0 +1,24 @@
+# Example pipeline-tags.yaml
+# This file maps pipeline tags to specific prompt versions.
+# It is optional and its path is configurable via the PIPELINE_TAGS_CONFIG environment variable.
+# If a tag, pipeline_type, or prompt_name is not found here, the DEFAULT_PROMPT_VERSION
+# from the application settings will be used as a fallback.
+
+# Structure:
+# {pipeline_tag}:
+#   {pipeline_type}:
+#     {logical_prompt_name}: {version_string}
+
+dev: # Corresponds to DEFAULT_CHAT_PIPELINE_TAG="dev" in config.py
+  chat: # pipeline_type (e.g., chat, creatordna)
+    system: "v1" # logical_prompt_name: version_string
+    greeting: "v1"
+    main_chat: "v1"
+
+# Add other tags/types here as needed.
+# Example of an experimental tag:
+# exp-v1:
+#   chat:
+#     system: "v1.1-exp"
+#     # greeting not defined for exp-v1 chat, will use DEFAULT_PROMPT_VERSION (e.g., "v1")
+#     main_chat: "v1.1-exp"

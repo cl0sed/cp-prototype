@@ -103,8 +103,21 @@ cp-prototype/
 │   │   │   ├── schemas.py    # Core internal data shapes (Pydantic)
 │   │   │   └── utils.py      # Common helper functions
 │   │   │
+│   │   ├── shared/prompts/   # --- KEY ADDITION: Shared versioned prompt templates ---
+│   │   │   └── {name}/{version}.j2
+│   │   │
+│   │   ├── shared/tools/     # --- KEY ADDITION: Shared tool definitions ---
+│   │   │   └── ...py
+│   │   │
 │   │   └── features/         # Business Logic / Domain Features
 │   │       ├── __init__.py
+│   │       │
+│   │       ├── chat/         # Chat feature logic
+│   │       │   ├── prompts/  # --- KEY ADDITION: Chat-specific versioned prompt templates ---
+│   │       │   │   └── {name}/{version}.j2
+│   │       │   ├── tools/    # --- KEY ADDITION: Chat-specific tool definitions ---
+│   │       │   │   └── ...py
+│   │       │   └── ...
 │   │       │
 │   │       ├── auth/         # Example user/auth feature logic
 │   │       │   └── ...
@@ -239,6 +252,22 @@ The database schema is designed to support the application's features from PoC t
 * Instrumentation: OpenTelemetry SDK.
 * Platforms: Grafana Cloud (Logs, Metrics, Traces - Infra/System), Sentry (Errors, APM - App Code), PostHog (Product Analytics - User/Product).
 * LLM Gateway (Portkey) provides LLM-specific monitoring.
+
+### 6.h. Prompt and Tool Versioning
+
+To support experimentation and controlled rollout of AI behavior changes, prompt templates and tool definitions are versioned and managed via a flexible configuration system.
+
+*   **Storage:** Prompt templates (`.j2` files) and tool definitions (`.py` files) are stored directly in the Git repository under `backend/app/features/.../` and `backend/app/shared/` directories, following a `{name}/{version}.j2` or `{name}.py` pattern. This leverages Git for version control.
+*   **Activation:** The specific version of a prompt or the set of tools used by a pipeline is determined at runtime based on a "pipeline tag".
+*   **Pipeline Tags:**
+    *   **Default:** A default pipeline tag (e.g., "stable", "experimental") is configured via environment variables (`DEFAULT_CHAT_PIPELINE_TAG`, etc.).
+    *   **Override:** Individual background jobs can specify an optional `pipeline_tag` in the `background_jobs` database table to override the default for that specific task.
+*   **Configuration File (`pipeline-tags.yaml`):** A YAML file (path configured via `PIPELINE_TAGS_CONFIG_PATH` ENV VAR) provides a mapping from pipeline tags to specific prompt versions for different pipeline types and logical prompt names. This allows defining which version of a 'system' or 'main_chat' prompt corresponds to a 'stable' or 'experimental' tag.
+*   **Fallback:** If a specific prompt version is not defined for the active pipeline tag in `pipeline-tags.yaml`, the system falls back to a default version specified by the `DEFAULT_PROMPT_VERSION` ENV VAR.
+*   **`PromptService`:** This service centralizes the logic for resolving the correct prompt version based on the override tag (if present), default tag, `pipeline-tags.yaml` lookup, and the fallback version. It is also responsible for reading the prompt file content from the file system and includes caching.
+*   **Startup Validation:** During application startup (via the lifespan event handler), the system validates the `pipeline-tags.yaml` file for parsing errors and checks for the existence of all required prompt files for the *default* pipeline tags defined in the environment variables. Missing files or invalid YAML will prevent the application from starting.
+
+This system provides a robust mechanism for managing and deploying different versions of AI prompts and tools alongside application code, enabling controlled experimentation and A/B testing of AI behavior.
 
 ## 7. Development Workflow
 

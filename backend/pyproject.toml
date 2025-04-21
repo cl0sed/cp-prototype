@@ -23,16 +23,18 @@ dependencies = [
   "opentelemetry-api>=1.31.0,<1.33.0",
   "opentelemetry-sdk>=1.31.0,<1.33.0",
   "opentelemetry-exporter-otlp>=1.31.0,<1.33.0",
-  "portkey-ai>=1.11.0,<1.12.0",
+  "portkey-ai>=1.12.0,<1.13.0",                  # Updated version
   "saq>=0.22.5,<0.23.0",                         # Added SAQ with version 0.22.5+ as specified in requirements
   "supertokens-python>=0.29.1,<0.30.0",          # Added SuperTokens SDK
   "email-validator>=2.2.0,<3.0.0",               # Added for Pydantic EmailStr validation
+  "pytest>=8.1.1,<8.2.0",                        # Moved from dev dependencies
+  "pytest-mock>=3.14.0,<3.20.0",
+  "pytest-asyncio>=0.23.6,<0.24.0",              # Moved from dev dependencies
+  "pyyaml>=6.0.0,<7.0.0",                        # Moved from dev dependencies - Required for loading prompts.yaml
 ]
 
 [project.optional-dependencies]
 dev = [
-  "pytest>=8.1.1,<8.2.0",
-  "pytest-asyncio>=0.23.6,<0.24.0",
   "ruff>=0.3.5,<0.4.0",
   "black>=24.3.0,<25.0.0",
   "isort>=5.13.2,<5.14.0",
@@ -44,10 +46,13 @@ dev = [
   "anyio>=4.9.0,<5.0.0",
   "cfgv>=3.4.0,<3.5.0",
   "identify>=2.6.9,<2.8.0",
-  "pyyaml>=6.0.0,<7.0.0",
+  # "pyyaml>=6.0.0,<7.0.0", # Moved to core dependencies
   # "python-dotenv>=1.0.0,<2.0.0", # Optional: Uncomment to add
   "sqlalchemy[mypy]>=2.0.35,<2.1.0", # For SQLAlchemy 2.0 type hints
   "watchfiles>=0.21.0,<0.22.0",      # Added for worker hot-reloading
+  "factory-boy>=3.3.3,<3.4.0",
+  "pytest-cov>=6.1.1,<6.2.0",
+  "aiosqlite>=0.21.0,<0.22.0",
 ]
 
 [build-system]

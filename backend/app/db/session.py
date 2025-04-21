@@ -17,18 +17,18 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
 
-from app.config import settings
+from app.config import get_settings  # Import get_settings
 
 # Create the AsyncEngine
 # For local development, we use a simple configuration
 # In production, connection pooling should be properly configured
 engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.ENVIRONMENT == "development",  # SQL logging for development
+    get_settings().DATABASE_URL,
+    echo=get_settings().ENVIRONMENT == "development",  # SQL logging for development
     future=True,
     # Disable pooling for simplicity in development
     # For production, this should be properly configured
-    poolclass=NullPool if settings.ENVIRONMENT == "development" else None,
+    poolclass=NullPool if get_settings().ENVIRONMENT == "development" else None,
 )
 
 # Create a configured "async_sessionmaker" factory

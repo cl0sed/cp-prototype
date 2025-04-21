@@ -5,6 +5,7 @@ This package contains the various route modules for the API endpoints,
 organized by feature or resource type.
 """
 
-from . import health, tasks
+# No need to import submodules here; main.py imports them directly.
 
-__all__ = ["health", "tasks"]
+# __all__ can be removed or kept empty if nothing needs explicit export from the package itself.
+__all__: list[str] = []

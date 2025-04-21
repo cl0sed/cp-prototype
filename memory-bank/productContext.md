@@ -35,6 +35,7 @@ This file provides a high-level overview of the project and the expected product
     * Module 5: Distribution & Monetization (Post-MVP)
     * Module 6: Creator Workflow System (PoC/MVP)
     * Module 7: Platform Foundation (PoC/MVP)
+* - **Note on GeneratedStructure Model Removal:** The `GeneratedStructure` model, previously intended to store structured content like video scripts and podcast outlines, has been temporarily removed due to technical issues during database migration and model mapping. This impacts features related to structured content generation and storage. Re-evaluation and potential re-introduction of this functionality will be considered in future development phases.
 
 ## Overall Architecture
 
@@ -46,3 +47,4 @@ This file provides a high-level overview of the project and the expected product
 * - **Key Architectural Principles:** Minimize direct infrastructure operation ("Low-Ops"); prioritize Async-first design; ensure Modularity for rapid iteration; enforce Idempotency, especially for background tasks; maintain Creator Voice Authenticity as a core product principle; enable Cost-efficient Scaling from the start. [Source: README.md Sec 6.b]
 * - **API vs. Worker Design:** The FastAPI API handles synchronous requests (authentication, validation, simple data operations, task initiation). It returns job IDs for long-running operations. For PoC, the frontend polls status endpoints. The SAQ Worker executes asynchronous, long-running, or I/O-bound tasks (e.g., LLM interactions via Haystack/Portkey, data ingestion pipelines, complex analyses) and updates status/results in the database. MVP aims to replace polling with WebSockets/SSE for real-time updates. [Source: README.md Sec 6.d]
 * - **Key Consideration (Deferred Technical Debt):** The current architecture (SAQ + background job tracking) is sufficient for PoC/MVP's independent background tasks but does *not* adequately address complex, multi-step, stateful workflow orchestration (e.g., managing the entire video creation lifecycle as a single, resilient process). This capability is intentionally deferred post-MVP and will likely require adopting a dedicated workflow engine (e.g., Temporal, Prefect).
+* [2025-04-20 07:56:04] - Initiated backend code structure improvements based on `backend_code_review.md`. Completed Phase 1 (DI and Service Refinement). Adopted a refined structure for AI tools (`ai/tools/`) and agents (`ai/agents/`) within `backend/app/`.

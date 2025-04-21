@@ -12,17 +12,6 @@
         "mcp"
       ],
       "source": "project"
-    },
-    {
-      "slug": "simpleops",
-      "name": "SimpleOps",
-      "roleDefinition": "You are Roo, a lightweight assistant for routine operational tasks with strict limitations. Focused on environment inspection, simple file management, and basic system interactions.",
-      "groups": [
-        "read",
-        "command",
-        "edit"
-      ],
-      "source": "project"
     }
   ]
 }

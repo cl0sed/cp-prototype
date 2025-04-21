@@ -44,7 +44,7 @@ const ProfilePage: React.FC = () => {
         setError(null);
 
         // Fetch profile data from backend endpoint
-        apiService.get<UserProfileData>('/api/user/profile') // Use apiService instance
+        apiService.get<UserProfileData>('/user/profile') // Use apiService instance
           .then((data: UserProfileData | null) => { // Accept null
             if (data) { // Check if data is not null
               setProfileData(data);

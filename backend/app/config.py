@@ -18,7 +18,6 @@ IMPORTANT NOTES:
    via environment variables injected securely, NOT from .env files
 """
 
-# Remove os import, not needed
 from typing import Optional, List
 from pydantic import (
     HttpUrl,
@@ -27,6 +26,7 @@ from pydantic import (
     Field,
 )  # Import Field for default
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from functools import lru_cache  # Import lru_cache
 
 
 class Settings(BaseSettings):
@@ -42,10 +42,28 @@ class Settings(BaseSettings):
     REDIS_URL: str
     LOG_LEVEL: str = "INFO"
     LLM_API_KEY: Optional[SecretStr] = None
+    LLM_MODEL: str = "google/gemini-2.5-flash-preview"  # Default LLM model
+    LLM_API_URL: Optional[HttpUrl] = None  # Optional custom API URL
 
     # --- SuperTokens Configuration ---
     SUPERTOKENS_CONNECTION_URI: str
     SUPERTOKENS_API_KEY: SecretStr
+
+    # --- LLM Configuration (Haystack) ---
+
+    # --- Chat Configuration ---
+    CHAT_PIPELINE_TAG: str = "chat_v1"  # Default pipeline version tag
+
+    # --- Prompt and Tool Versioning Configuration ---
+    DEFAULT_CHAT_PIPELINE_TAG: str = Field(
+        default="dev"
+    )  # Required default tag for the chat pipeline
+    PIPELINE_TAGS_CONFIG_PATH: str = Field(
+        default="./pipeline-tags.yaml"
+    )  # Path to the pipeline tags override YAML file
+    DEFAULT_PROMPT_VERSION: str = Field(
+        default="v1"
+    )  # Default prompt version to use if no override is found
 
     # --- Observability (MVP) ---
     SENTRY_DSN: Optional[str] = None
@@ -107,12 +125,31 @@ class Settings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
+    # Method to load prompt configuration
+    @computed_field
+    def PROMPT_CONFIG(self) -> dict:
+        """Loads the prompt configuration from prompts.yaml."""
+        # NOTE: This requires PyYAML dependency
+        import yaml
+        import logging  # Added logging import
 
-# Create a single instance of Settings to be imported by other modules
-settings = Settings()
+        try:
+            with open("prompts.yaml", "r", encoding="utf-8") as f:
+                return yaml.safe_load(f)
+        except FileNotFoundError:
+            logging.warning(
+                "prompts.yaml not found. Using empty prompt config."
+            )  # Replaced print with logging
+            return {}
+        except yaml.YAMLError as e:
+            logging.error(
+                f"Failed to parse prompts.yaml: {e}"
+            )  # Replaced print with logging
+            return {}
 
-# Debug print to confirm FORWARDED_ALLOW_IPS value after loading
-print(f"DEBUG - FORWARDED_ALLOW_IPS set to: {settings.FORWARDED_ALLOW_IPS}")
-print(
-    f"DEBUG - CORS_ALLOWED_ORIGINS set to: {settings.CORS_ALLOWED_ORIGINS}"
-)  # Also print CORS origins
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Cached dependency for getting settings."""
+    # Instantiate Settings directly here, relying on lru_cache for singleton behavior
+    return Settings()

@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.worker.settings import queue
-from app.shared.constants import (
+from app.shared.constants.constants import (
     Status as JobStatus,
 )  # Import SAQ's Status enum directly
 
@@ -27,8 +27,8 @@ class TriggerRequest(BaseModel):
     user_id: Optional[uuid.UUID] = Field(
         default=None, description="User ID associated with this task"
     )
-    project_id: Optional[uuid.UUID] = Field(
-        default=None, description="Project ID associated with this task"
+    video_id: Optional[uuid.UUID] = Field(
+        default=None, description="Video ID associated with this task"
     )
 
 

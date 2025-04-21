@@ -18,16 +18,18 @@ from typing import Any, Dict
 from sqlalchemy import select
 from saq import Queue
 
-from app.config import settings as app_settings
+from app.config import get_settings  # Import get_settings
 from app.db.models import BackgroundJob
 from app.db.session import async_session_factory
-from app.shared.constants import Status as JobStatus  # Use SAQ's Status enum directly
+from app.shared.constants.constants import (
+    Status as JobStatus,
+)  # Use SAQ's Status enum directly
 from app.worker.tasks import poc_test_task
 
 logger = logging.getLogger(__name__)
 
 # Create queue using SAQ's proper connection management
-queue = Queue.from_url(app_settings.REDIS_URL, name="default")
+queue = Queue.from_url(get_settings().REDIS_URL, name="default")
 
 
 async def startup(ctx: Dict[str, Any]) -> None:

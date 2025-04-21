@@ -1,22 +1,29 @@
-"""
-API Request/Response Data Schemas (Pydantic Models).
+from pydantic import BaseModel, EmailStr, Field
+from datetime import datetime
+from typing import Optional
+import uuid  # Import uuid
 
-This file defines the data structures (shapes) for API request bodies and
-response payloads using Pydantic models.
 
-Define models that represent the exact data format expected by API endpoints
-and returned to clients. Use FastAPI's integration with Pydantic for automatic
-data validation and serialization.
+class UserProfile(BaseModel):
+    """
+    Schema for returning user profile information.
+    Reflects the User model structure.
+    """
 
-Avoid putting database models (SQLAlchemy) or complex internal business objects
-directly in API schemas. Keep them focused on the API contract.
-Use distinct schemas for request input vs. response output if they differ significantly.
-"""
+    id: uuid.UUID = Field(..., description="User's database primary key")
+    email: EmailStr = Field(..., description="User's email address")
+    created_at: datetime = Field(..., description="User account creation timestamp")
+    username: Optional[str] = Field(
+        None, description="User's chosen username (optional)"
+    )
 
-from pydantic import BaseModel
+    class Config:
+        from_attributes = True  # For Pydantic v2+ compatibility with ORM models
 
 
 class HealthResponse(BaseModel):
-    """Response model for the health check endpoint."""
+    """
+    Schema for the health check endpoint response.
+    """
 
-    status: str
+    status: str = Field(..., description="Status of the application (e.g., 'ok')")

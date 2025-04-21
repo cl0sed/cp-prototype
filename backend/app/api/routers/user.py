@@ -1,9 +1,8 @@
-# backend/app/api/routers/user.py
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 
-from app.db.models import User
-from app.schemas.user import UserProfile
+from app.db.models.user import User
+from app.api.schemas import UserProfile
 from app.features.auth import (
     get_user_from_session,
 )  # Added import for get_user_from_session

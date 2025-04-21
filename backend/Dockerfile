@@ -13,7 +13,7 @@ RUN pip install uv
 COPY pyproject.toml poetry.lock* ./
 
 # Option 1: Compile inside build
-RUN uv pip compile pyproject.toml -o requirements.txt
+RUN uv pip compile pyproject.toml --extra dev -o requirements.txt
 # Option 2: Copy pre-compiled (if done outside)
 # COPY requirements.txt ./
 

@@ -5,7 +5,17 @@ This module handles the setup and configuration of SuperTokens authentication,
 following the project's async-first architecture.
 """
 
+import logging
+
 from typing import Dict, Any, List, Optional, Union
+from uuid import UUID  # Import UUID
+
+from app.config import get_settings
+from app.db.session import (
+    get_db_session,
+    async_session_factory,
+)
+from app.db.models.user import User
 
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,31 +29,34 @@ from supertokens_python.recipe.emailpassword.interfaces import APIInterface, API
 from supertokens_python.recipe.emailpassword.types import (
     FormField,
     InputFormField,
-)  # Import InputFormField
+    ErrorFormField,  # Import ErrorFormField
+)
+from supertokens_python.recipe.emailpassword.exceptions import (
+    raise_form_field_exception,
+)  # Import raise_form_field_exception
 
-from app.config import settings
-from app.db.session import (
-    get_db_session,
-    async_session_factory,
-)  # Ensure async_session_factory is imported
-from app.db.models import User
-
-# Use APP_BASE_URL from settings instead of hardcoding the proxy address
+logger = logging.getLogger(__name__)  # Added logger instance
 
 
 def get_api_domain() -> str:
     """Get the API domain from settings."""
-    return settings.APP_BASE_URL
+    return get_settings().APP_BASE_URL
 
 
 def get_website_domain() -> str:
     """Get the website domain from settings."""
-    return settings.APP_BASE_URL
+    return get_settings().APP_BASE_URL
 
 
 def get_app_name() -> str:
     """Get the app name from settings."""
-    return settings.APP_NAME if hasattr(settings, "APP_NAME") else "AI Video Platform"
+    # Check if APP_NAME exists on the settings object returned by get_settings()
+    settings_obj = get_settings()
+    return (
+        settings_obj.APP_NAME
+        if hasattr(settings_obj, "APP_NAME")
+        else "AI Video Platform"
+    )
 
 
 def override_email_password_apis(original_implementation: APIInterface) -> APIInterface:
@@ -61,20 +74,50 @@ def override_email_password_apis(original_implementation: APIInterface) -> APIIn
         api_options: APIOptions,
         user_context: Dict[str, Any],
     ):
-        # Call original implementation first
-        response = await original_sign_up_post(
-            form_fields,
-            tenant_id,
-            session,
-            should_try_linking_with_session_user,
-            api_options,
-            user_context,
-        )
+        # --- Custom: Check for existing username before calling original SuperTokens signup ---
+        username = next((f.value for f in form_fields if f.id == "username"), None)
+        if username:
+            async with async_session_factory() as db_session:
+                stmt = select(User).where(User.username == username)
+                result = await db_session.execute(stmt)
+                existing_user = result.scalar_one_or_none()
+                if existing_user:
+                    # Username already exists, return a field error response
+                    raise_form_field_exception(
+                        "USERNAME_ALREADY_EXISTS_ERROR",  # Using a plausible error code
+                        [
+                            ErrorFormField(
+                                id="username", error="This username is already taken."
+                            )
+                        ],
+                    )
+        # --- End Custom Check ---
 
-        # If signup was successful, sync with our DB
+        # Call original implementation first
+        try:
+            response = await original_sign_up_post(
+                form_fields,
+                tenant_id,
+                session,
+                should_try_linking_with_session_user,
+                api_options,
+                user_context,
+            )
+        except Exception as e:
+            logger.error(f"Error during or immediately after SuperTokens sign-up: {e}")
+            logger.exception(
+                "Exception during or immediately after SuperTokens sign-up"
+            )
+            # Re-raise the exception or raise an HTTPException
+            # Raising HTTPException is better to ensure non-200 status
+            raise HTTPException(
+                status_code=500, detail="An unexpected error occurred during signup."
+            )
+
+        # If signup was successful from SuperTokens' perspective, sync with our DB
         if response.status == "OK":
             email = next((f.value for f in form_fields if f.id == "email"), None)
-            # Extract username as well
+            # Extract username again (should be the same as the one checked above)
             username = next((f.value for f in form_fields if f.id == "username"), None)
             if email:  # Keep check for email as it's mandatory
                 supertokens_user_id = response.user.id
@@ -82,7 +125,7 @@ def override_email_password_apis(original_implementation: APIInterface) -> APIIn
                 async with async_session_factory() as db_session:
                     try:
                         # Use ORM select
-                        stmt = select(User).where(User.email == email)
+                        stmt = select(User).options().where(User.email == email)
                         result = await db_session.execute(stmt)
                         existing_user = result.scalar_one_or_none()
                         if existing_user:
@@ -90,16 +133,16 @@ def override_email_password_apis(original_implementation: APIInterface) -> APIIn
                             if existing_user.supertokens_user_id is None:
                                 existing_user.supertokens_user_id = supertokens_user_id
                                 await db_session.commit()
-                                print(
+                                logger.info(
                                     f"Linked existing user {email} to SuperTokens ID {supertokens_user_id}"
-                                )
+                                )  # Replaced print with logging
                             elif (
                                 existing_user.supertokens_user_id != supertokens_user_id
                             ):
                                 # Handle potential conflict - should ideally not happen if ST handles email uniqueness
-                                print(
-                                    f"Warning: User {email} already linked to a different SuperTokens ID."
-                                )
+                                logger.warning(
+                                    f"User {email} already linked to a different SuperTokens ID."
+                                )  # Replaced print with logging
                                 await db_session.rollback()  # Rollback to be safe
                             # else: user already correctly linked, do nothing
                         else:
@@ -109,17 +152,24 @@ def override_email_password_apis(original_implementation: APIInterface) -> APIIn
                                 email=email,
                                 supertokens_user_id=supertokens_user_id,
                                 username=username,  # Add username here
+                                role="user",  # Assign default role here
                             )
                             db_session.add(new_user)
                             await db_session.commit()
-                            print(
+                            logger.info(
                                 f"Created new user {email} with SuperTokens ID {supertokens_user_id}"
-                            )
+                            )  # Replaced print with logging
                     except Exception as e:
                         await db_session.rollback()
-                        print(f"Error syncing user after sign-up: {e}")
-                        # Optionally re-raise or handle the error to inform SuperTokens/user
-                        # For now, just log and return original response
+                        # Log the full exception details for debugging
+                        logger.error(f"Error syncing user after sign-up: {e}")
+                        logger.exception("Exception syncing user after sign-up")
+                        # Raise HTTPException to ensure a non-200 status code is returned
+                        raise HTTPException(
+                            status_code=500,
+                            detail="An unexpected error occurred during user creation.",
+                        )
+        # If original SuperTokens sign-up was not OK, or database sync was successful, return the original response
         return response
 
     async def sign_in_post(
@@ -166,15 +216,15 @@ def override_email_password_apis(original_implementation: APIInterface) -> APIIn
                             if email_user:
                                 email_user.supertokens_user_id = supertokens_user_id
                                 await db_session.commit()
-                                print(
+                                logger.info(
                                     f"Linked existing user {email} to SuperTokens ID {supertokens_user_id} during sign-in"
-                                )
+                                )  # Replaced print with logging
                             else:
                                 # User exists in SuperTokens but not in our DB - this indicates an inconsistency
                                 # Log a warning, maybe create the user? Depends on desired behavior.
-                                print(
-                                    f"Warning: User {email} (ST ID: {supertokens_user_id}) signed in but not found or already linked in local DB."
-                                )
+                                logger.warning(
+                                    f"User {email} (ST ID: {supertokens_user_id}) signed in but not found or already linked in local DB."
+                                )  # Replaced print with logging
                                 # Optionally create user if missing:
                                 # new_user = User(email=email, supertokens_user_id=supertokens_user_id)
                                 # db_session.add(new_user)
@@ -182,12 +232,13 @@ def override_email_password_apis(original_implementation: APIInterface) -> APIIn
                                 # print(f"Created missing user record for {email} during sign-in.")
                     except Exception as e:
                         # Avoid rollback here unless absolutely necessary, as sign-in was successful
-                        print(f"Error checking/syncing user after sign-in: {e}")
+                        logger.error(f"Error checking/syncing user after sign-in: {e}")
                         # Do not interfere with the successful sign-in response
         return response
 
     original_implementation.sign_up_post = sign_up_post
     original_implementation.sign_in_post = sign_in_post
+
     return original_implementation
 
 
@@ -204,8 +255,8 @@ def init_supertokens(app: FastAPI) -> None:
             website_base_path="/auth",  # Reverted base path
         ),
         supertokens_config=SupertokensConfig(
-            connection_uri=settings.SUPERTOKENS_CONNECTION_URI,
-            api_key=settings.SUPERTOKENS_API_KEY.get_secret_value(),
+            connection_uri=get_settings().SUPERTOKENS_CONNECTION_URI,
+            api_key=get_settings().SUPERTOKENS_API_KEY.get_secret_value(),
         ),
         framework="fastapi",
         recipe_list=[
@@ -260,36 +311,24 @@ async def add_db_context_to_request(db_session: AsyncSession = Depends(get_db_se
     return {"db_session": db_session}
 
 
-# Corrected implementation: Depends directly on session_verifier and get_db_session
 async def get_required_user_from_session(
     session_container: SessionContainer = Depends(session_verifier),
     db_session: AsyncSession = Depends(get_db_session),
-) -> User:
+) -> UUID:
+    logger.debug("get_required_user_from_session called")
     """
     Get the User model instance associated with the current session.
     Raises HTTPException(403) if user is not found in the database.
-
-    This dependency combines fetching the user and handling the common error case
-    where a valid session exists but no corresponding user record is found in the DB.
-
-    Usage in FastAPI:
-    ```
-    @app.get("/protected-endpoint")
-    async def protected_endpoint(user: User = Depends(get_required_user_from_session)):
-        # No need to check if user exists - it's guaranteed or an exception is raised
-        return {"user_id": str(user.id)}
-    ```
     """
     supertokens_user_id = session_container.get_user_id()
-    # Use ORM select
-    stmt = select(User).where(User.supertokens_user_id == supertokens_user_id)
+
+    stmt = select(User).options().where(User.supertokens_user_id == supertokens_user_id)
     result = await db_session.execute(stmt)
     user = result.scalar_one_or_none()
 
     if not user:
-        # Log the warning as well
-        print(
-            f"WARNING: Valid session for ST ID {supertokens_user_id} but no matching user in DB."
+        logger.warning(
+            f"Valid session for ST ID {supertokens_user_id} but no matching user in DB."
         )
         raise HTTPException(status_code=403, detail="User not found in database")
-    return user
+    return user.id

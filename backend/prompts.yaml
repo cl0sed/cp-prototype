@@ -1,0 +1,11 @@
+# prompts.yaml.example
+# Maps pipeline steps/tags to specific prompt template versions
+pipelines:
+  chat_v1:
+    greeting_prompt:
+      name: "chat_greeting"
+      version: "1.0"
+    main_prompt:
+      name: "chat_main"
+      version: "1.0"
+# Add more pipelines/steps as needed

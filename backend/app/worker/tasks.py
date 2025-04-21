@@ -42,9 +42,12 @@ async def poc_test_task(
     Returns:
         A dictionary containing the job result
     """
-    # Extract job ID from context for logging and tracking
+    # Extract job ID and pipeline_tag from context for logging and tracking
     job = ctx.get("job")
     job_id = job.id if job else "unknown"
+    # Access the pipeline_tag from the job object if needed for service/pipeline calls
+    pipeline_tag = job.pipeline_tag if job else None
+    logger.debug(f"DEBUG: Task {job_id} received pipeline_tag: {pipeline_tag}")
 
     logger.info(f"Starting poc_test_task - job_id: {job_id}, message: {message}")
 

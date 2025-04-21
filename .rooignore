@@ -56,9 +56,9 @@ dmypy.json
 # pnpm-lock.yaml # Same as above
 
 # Secrets & Environment Variables (CRITICAL - Never include secrets in context)
-.env
-*.env.*
-!.env.example # Keep example files as they show structure
+# .env
+# *.env.*
+# !.env.example # Keep example files as they show structure
 # backend/.env # Explicitly ignore backend env if separate [cite: 186]
 
 # Logs
