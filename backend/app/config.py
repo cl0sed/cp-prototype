@@ -3,19 +3,14 @@ Global settings instance to be imported and used throughout the application.
 
 Example usage:
 ```python
-from app.config import settings
+from app.config import get_settings
+
+settings = get_settings()
 
 # Use settings in your code
 log_level = settings.LOG_LEVEL
 database_url = settings.DATABASE_URL
 ```
-
-IMPORTANT NOTES:
-1. Always use SecretStr for sensitive values to prevent accidental logging
-2. For PoC development, only the core variables need to be set
-3. Optional MVP variables don't need values during PoC, but the structure is ready
-4. For deployed environments (staging/production), all settings MUST be provided
-   via environment variables injected securely, NOT from .env files
 """
 
 from typing import Optional, List
@@ -24,9 +19,9 @@ from pydantic import (
     SecretStr,
     computed_field,
     Field,
-)  # Import Field for default
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from functools import lru_cache  # Import lru_cache
+from functools import lru_cache
 
 
 class Settings(BaseSettings):
@@ -71,15 +66,12 @@ class Settings(BaseSettings):
     OTEL_EXPORTER_OTLP_ENDPOINT: Optional[HttpUrl] = None
 
     # --- CORS Configuration ---
-    # Load CORS_ORIGINS from env/.env, default to proxy address if not set
     CORS_ORIGINS: str = Field(default="http://localhost")
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: str = Field(default="GET,POST,PUT,DELETE,OPTIONS")
     CORS_ALLOW_HEADERS: str = Field(default="*")
 
     # --- Proxy Header Configuration ---
-    # Tell Uvicorn/FastAPI which IPs are trusted to send proxy headers (X-Forwarded-*)
-    # Load from env/.env, default to '*' for development ease. Restrict in production.
     FORWARDED_ALLOW_IPS: str = Field(default="*")
 
     # --- Application URLs ---

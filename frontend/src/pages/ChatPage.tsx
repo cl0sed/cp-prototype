@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react'; // Import useEffect
-import { Container, Title, Paper, Stack, Text, Alert } from '@mantine/core';
+import { Container, Title, Paper, Stack, Text } from '@mantine/core'; // Removed Alert
+import { showNotification } from '@mantine/notifications'; // Added for toasts
 import { IconAlertCircle } from '@tabler/icons-react';
 import ChatInput from '../components/ChatInput.tsx'; // Update import path
 import MessageList from '../components/MessageList.tsx'; // Update import path
 // Assuming apiService is in frontend/src/services
-import { sendMessage, getChatHistory, getGreeting, ChatMessage, ApiError } from '../services/apiService'; // Import new functions and ApiError
+import { sendMessage, getGreeting, ChatMessage, ApiError } from '../services/apiService'; // Import new functions and ApiError
 
 function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]); // Renamed for clarity
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); // Re-add error state
   const [sessionId, setSessionId] = useState<string | undefined>(undefined); // State for session ID
   const [greeting, setGreeting] = useState<string>('Loading greeting...'); // State for greeting
 
@@ -18,7 +19,6 @@ function ChatPage() {
     console.log('ChatPage mounted');
 
     const fetchInitialData = async () => {
-      setError(null); // Clear previous errors
 
       // 1. Fetch Greeting
       try {
@@ -26,30 +26,33 @@ function ChatPage() {
         setGreeting(greetingResponse.greeting);
       } catch (err) {
         console.error('Error fetching greeting:', err);
-        setGreeting('Failed to load greeting.'); // Set a fallback greeting
-        // Optionally set an error state if greeting is critical
-        // setError('Failed to load greeting.');
+        // Display error as a toast notification
+        showNotification({
+          title: 'Error',
+          message: 'Failed to load greeting.',
+          color: 'red',
+        });
       }
 
       // 2. Load Session ID from local storage and fetch history
-      const storedSessionId = localStorage.getItem('chatSessionId');
-      if (storedSessionId) {
-        setSessionId(storedSessionId);
-        console.log(`Loading history for session: ${storedSessionId}`);
-        try {
-          const historyResponse = await getChatHistory(storedSessionId);
-          setMessages(historyResponse.messages);
-        } catch (err) {
-          console.error(`Error fetching history for session ${storedSessionId}:`, err);
-          setError('Failed to load chat history.');
-          // Optionally clear stored session ID if history fetch fails
-          // localStorage.removeItem('chatSessionId');
-          // setSessionId(undefined);
-        }
-      } else {
-          console.log('No session ID found in local storage. Starting a new session.');
+      // const storedSessionId = localStorage.getItem('chatSessionId'); // Commented out for debugging
+      // if (storedSessionId) { // Commented out for debugging
+      //   setSessionId(storedSessionId); // Commented out for debugging
+      //   console.log(`Loading history for session: ${storedSessionId}`); // Commented out for debugging
+      //   try { // Commented out for debugging
+      //     const historyResponse = await getChatHistory(storedSessionId); // Commented out for debugging
+      //     setMessages(historyResponse.messages); // Commented out for debugging
+      //   } catch (err) { // Commented out for debugging
+      //     console.error(`Error fetching history for session ${storedSessionId}:`, err); // Commented out for debugging
+      //     setError('Failed to load chat history.'); // Commented out for debugging
+      //     // Optionally clear stored session ID if history fetch fails // Commented out for debugging
+      //     // localStorage.removeItem('chatSessionId'); // Commented out for debugging
+      //     // setSessionId(undefined); // Commented out for debugging
+      //   } // Commented out for debugging
+      // } else { // Commented out for debugging
+          console.log('No session ID found in local storage. Starting a new session (history disabled).'); // Modified log
           // No history to load, messages state is already empty
-      }
+      // } // Commented out for debugging
     };
 
     fetchInitialData();
@@ -78,7 +81,6 @@ function ChatPage() {
     // Optimistically add user message to the messages state
     setMessages((prevMessages) => [...prevMessages, tempUserMessage]);
     setIsLoading(true);
-    setError(null); // Clear previous errors
 
     try {
       // Call the backend API with the message and current session ID
@@ -89,22 +91,32 @@ function ChatPage() {
       // Update session ID from the response if it's a new session
       if (response.session_id && response.session_id !== sessionId) {
           setSessionId(response.session_id);
-          localStorage.setItem('chatSessionId', response.session_id); // Store in local storage
+          // localStorage.setItem('chatSessionId', response.session_id); // Store in local storage (Commented out for debugging)
           console.log(`New session ID received and stored: ${response.session_id}`);
       }
 
-      // Fetch the updated history to get the agent's response and correct message IDs/timestamps
-      // This is a simpler approach than trying to construct the agent message client-side
-      // and ensures we have the correct state from the backend.
-      const updatedHistoryResponse = await getChatHistory(response.session_id || sessionId);
-      setMessages(updatedHistoryResponse.messages);
+      // Add the assistant's reply to the messages state
+      const assistantMessage: ChatMessage = {
+          id: `assistant-${Date.now()}`, // Temporary ID for display
+          session_id: response.session_id || sessionId || 'temp', // Use session ID from response or current
+          role: 'assistant',
+          content: response.reply,
+          timestamp: new Date().toISOString(), // Use current time for display
+          metadata: { model: response.model }, // Include model info if available in response
+      };
+      setMessages((prevMessages) => [...prevMessages, assistantMessage]);
 
 
     } catch (err) {
       console.error('Error sending message:', err);
       // Check if it's an ApiError to get more details
       const errorMessage = err instanceof ApiError ? err.message : 'An unexpected error occurred.';
-      setError(`Failed to send message: ${errorMessage}`);
+      // Display error as a toast notification
+      showNotification({
+        title: 'Error',
+        message: `Failed to send message: ${errorMessage}`,
+        color: 'red',
+      });
 
       // Optionally remove the optimistic user message if the API call failed
       // setMessages((prevMessages) => prevMessages.filter(msg => msg.id !== tempUserMessage.id));
@@ -125,16 +137,8 @@ function ChatPage() {
   }, []);
   */
   return (
-    <Container size="md" style={{ height: 'calc(100vh - 60px)', display: 'flex', flexDirection: 'column' }}> {/* Adjust height based on header */}
-      <Title order={2} ta="center" mt="md" mb="md">{greeting}</Title> {/* Use dynamic greeting */}
-
-      {error && (
-        <Alert variant="light" color="red" title="Error" icon={<IconAlertCircle size={16} />}>
-          {error}
-        </Alert>
-      )}
-
-      <Paper shadow="sm" radius="md" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <Container size="md" style={{ height: 'calc(100vh - 140px)', display: 'flex', flexDirection: 'column', position: 'relative' }} pt="md"> {/* Adjust height based on header, add relative positioning for absolute children, added top padding */}
+      <Paper shadow="sm" radius="md" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}> {/* Removed overflow: hidden */}
         <MessageList messages={messages} /> {/* Use 'messages' state */}
         <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
       </Paper>

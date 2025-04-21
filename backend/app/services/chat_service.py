@@ -114,7 +114,9 @@ class ChatService:
             llm_generator = OpenAIChatGenerator(
                 api_key=Secret.from_token(self.settings.LLM_API_KEY.get_secret_value()),
                 model=self.settings.LLM_MODEL,
-                # api_base_url=self.settings.LLM_API_URL if self.settings.LLM_API_URL else None,
+                api_base_url=str(self.settings.LLM_API_URL)
+                if self.settings.LLM_API_URL
+                else None,
             )
 
             # Format the prompt with user details and history
@@ -253,7 +255,7 @@ class ChatService:
                 pipeline_type="chat",  # Specify the pipeline type
                 override_pipeline_tag=None,  # Use default tag for ChatService interactions
                 prompt_service=self.prompt_service,
-                settings_obj=self.settings,  # Pass settings as it's needed by the generator (using settings_obj as per pipeline signature)
+                settings=self.settings,  # Pass settings as it's needed by the generator (using settings_obj as per pipeline signature)
                 # db=db # Pass db if needed by any pipeline components
             )
 

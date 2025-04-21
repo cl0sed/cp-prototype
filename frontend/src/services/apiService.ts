@@ -38,6 +38,7 @@ export interface ChatMessageRequest {
 export interface ChatMessageAPIResponse {
   reply: string;
   session_id: string; // UUID string
+  model?: string; // Add optional model property for debugging display
 }
 
 export interface GreetingResponse {
@@ -156,29 +157,33 @@ class ApiService {
    * @returns A list of chat messages.
    * @throws {ApiError} If the API call fails.
    */
+  /*
   async getChatHistory(sessionId?: string, limit?: number): Promise<ChatHistoryResponse> {
-      logger.info(`Fetching chat history for session: ${sessionId}, limit: ${limit}`);
-      const queryParams = new URLSearchParams();
-      if (sessionId) {
-          queryParams.append('session_id', sessionId);
-      }
-      if (limit !== undefined) {
-          queryParams.append('limit', limit.toString());
-      }
-      const endpoint = `/chat/history${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-      const response = await this.get<ChatHistoryResponse>(endpoint);
-      logger.info('Chat history received.');
+      // logger.info(`Fetching chat history for session: ${sessionId}, limit: ${limit}`);
+      // const queryParams = new URLSearchParams();
+      // if (sessionId) {
+      //     queryParams.append('session_id', sessionId);
+      // }
+      // if (limit !== undefined) {
+      //     queryParams.append('limit', limit.toString());
+      // }
+      // const endpoint = `/chat/history${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      // const response = await this.get<ChatHistoryResponse>(endpoint);
+      // logger.info('Chat history received.');
 
-      if (response === null) {
-          // Depending on backend implementation, empty history might return 200 with empty list
-          // or 404. Assuming 200 with empty list is handled by the type.
-          // If 404 is expected for no history, handle it in the calling component.
-          // For now, assume null means an unexpected empty response.
-          throw new ApiError("Received unexpected empty response from chat history endpoint", 500, {});
-      }
+      // if (response === null) {
+      //     // Depending on backend implementation, empty history might return 200 with empty list
+      //     // or 404. Assuming 200 with empty list is handled by the type.
+      //     // If 404 is expected for no history, handle it in the calling component.
+      //     // For now, assume null means an unexpected empty response.
+      //     throw new ApiError("Received unexpected empty response from chat history endpoint", 500, {});
+      // }
 
-      return response;
+      // return response
+
+      return { messages: [] };
   }
+  */
 
   /**
    * Fetches the dynamic greeting for the authenticated user.
@@ -216,5 +221,5 @@ export const apiService = new ApiService();
 
 // Export the methods directly for easier import in components
 export const sendMessage = apiService.sendMessage.bind(apiService);
-export const getChatHistory = apiService.getChatHistory.bind(apiService);
+// export const getChatHistory = apiService.getChatHistory.bind(apiService); // Temporarily disabled for debugging
 export const getGreeting = apiService.getGreeting.bind(apiService);
