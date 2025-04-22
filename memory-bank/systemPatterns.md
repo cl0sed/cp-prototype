@@ -15,8 +15,8 @@ It is optional, but recommended to be updated as the project evolves.
 *   React State Management: Use React hooks (useState, useContext, etc.) for state management. [Source: frontend-react/src/contexts/AuthContext.tsx]
 *   Custom Haystack Components: Define custom components using the `@component` decorator and subclassing `haystack.core.component.Component` to wrap external libraries or custom logic within the Haystack pipeline framework.
 *   Use Cached `Settings` object through `get_settings` instead of accessing the `Settings` directly.
-*   Store feature-specific prompts in `features/.../prompts/{prompt_name}/{version}.ext`, shared prompts in `shared/prompts/{prompt_name}/{version}.j2`
-*   Store feature-specific tools in `features/.../tools.py` and shared tools in `shared/tools/... .py`
+*   Store agent-specific prompts in `agents/platform/.../prompts/{prompt_name}/{version}.j2` or `agents/video/.../prompts/{prompt_name}/{version}.j2`. Shared prompts remain in `shared/prompts/{prompt_name}/{version}.j2`. [Source: README.md Sec 6.h]
+*   Store agent-specific tools in `agents/platform/.../tools.py` or `agents/video/.../tools.py`. Shared tools are located in `shared/tools/*.py`, including `shared/tools/memory.py`. [Source: README.md Sec 6.h]
 *   Versioning pattern for prompts: `{prompt_name}/{version}.j2` within the respective prompts directory.
 *   Prompt and Tool Versioning: Prompts and tools are versioned in Git, activated via pipeline tags (default or override), configured via `pipeline-tags.yaml` with a fallback to `DEFAULT_PROMPT_VERSION`, and managed by `PromptService`. Startup validation ensures config integrity and file existence for default tags.
 *   Message Content Access: Use `.text` to access the main textual content of a Haystack `ChatMessage` object. Use `.content` to access the main textual content of a database `ChatMessage` model object. Be mindful of which object type you are working with. [2025-04-21 13:08:50]
@@ -44,6 +44,11 @@ It is optional, but recommended to be updated as the project evolves.
 *   Alembic Migration Dependency Resolution: Leveraging Alembic's built-in dependency analysis supplemented by `use_alter=True` on specific foreign keys to handle circular dependencies during schema creation.
 *   Programmatic Migration Customization: Utilizing the `alembic.env.py` `process_revision_directives` hook to automatically include necessary database commands (e.g., `CREATE EXTENSION`) in generated migration scripts, avoiding manual editing.
 *   Centralized Model Registration: Importing all SQLAlchemy models in `backend/app/db/models/__init__.py` to ensure Alembic's metadata is fully populated for autogenerate.
+*   **Multi-Agent Conversational System:** The core interaction pattern is driven by distinct AI agents (Platform and Video agents) interacting with users via separate chat sessions, orchestrated as background tasks. [Source: README.md Sec 1, 6.c, 6.d, 6.i]
+*   **Distributed Workflow Orchestration:** SAQ tasks and dedicated workflow logic (`workflow/orchestrator/`) manage state transitions between agents and video phases. A more robust workflow engine is deferred technical debt. [Source: README.md Sec 6.c, 6.d, 6.f, 6.i]
+*   **Contextual Memory Management:** Different memory strategies (Working, Episodic, Semantic, Procedural) are utilized and accessed via standardized tools (`shared/tools/memory.py`) to maintain context across agent interactions. Advanced analysis and updates are deferred. [Source: README.md Sec 6.c, 6.f, 6.i, 6.e]
+*   **Real-time Communication via Server-Sent Events (SSE):** Used for the backend (API/Worker) to push real-time updates (messages, status, progress) to the frontend, managing persistent connections per user session. [Source: README.md Sec 6.a, 6.d, 6.i]
+*   **Comprehensive Observability Strategy:** Implementation targets MVP using OpenTelemetry SDK for instrumentation, with Grafana Cloud (Logs, Metrics, Traces), Sentry (Errors, APM), and PostHog (Product Analytics) as target platforms. [Source: README.md Sec 6.g]
 
 ## Frontend Patterns
 
