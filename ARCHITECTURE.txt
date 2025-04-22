@@ -1,0 +1,402 @@
+# AI Video Creation Platform - Project README
+
+*(As of: April 22, 2025)*
+
+This README provides a central hub for understanding the project's goals, structure, architecture, development workflow, and current status. It aims to be a self-contained context source for team members and AI agents working on the project.
+
+## 1. High-Level Overview
+
+This project is an AI-powered platform designed to drastically reduce pre-production time (aiming for 90% reduction) for educational content creators by automating research, structuring, and scripting while preserving the creator's unique voice and teaching style[cite: 19, 4278]. It addresses critical bottlenecks that lead to creator burnout and limit sustainable channel growth[cite: 4282].
+
+The primary user interaction model is conversational, driven by AI agents orchestrated via the Haystack framework, guiding creators through a human-in-the-loop pre-production pipeline[cite: 4280, 4304].
+
+## 2. Problem Space & Target Audience
+
+*   **Problem:** Educational creators invest significant time (10-30 hours/video) in pre-production, with research/scripting being the major bottleneck (60-70%)[cite: 18, 25, 4281]. This limits output, creates stress, and risks burnout[cite: 4282]. Existing AI tools often lack the ability to maintain the creator's unique voice and teaching style, a critical factor for audience connection[cite: 26, 4282].
+*   **Primary Target Audience:** "Accelerating Creators" - typically solo creators with 25K-50K subscribers, generating $30K-$75K annually[cite: 18, 41, 4283]. They are transitioning from passion projects to businesses, feeling the conflict between creative goals and scaling demands, and are highly receptive to solutions that save time while preserving authenticity[cite: 21, 4284].
+*   **Key Pain Points:** Time-Quality Paradox (scaling vs. quality), Creator Burnout, Voice & Authenticity Concerns with AI, Structuring complex educational content effectively[cite: 25, 26, 4285].
+
+## 3. Vision & Core Features
+
+*   **Vision:** To be the essential pre-production partner for educational creators, enabling them to "Create more without burnout - reclaim your creative passion"[cite: 4286].
+*   **Core Value Proposition:**
+    *   **Time Reduction:** Transform 15-30 hours of research/scripting into 2-3 hours of focused effort[cite: 69, 4287].
+    *   **Voice Preservation ("Creator DNA"):** Analyze existing content to capture and replicate unique linguistic patterns, terminology, pacing, and teaching style, avoiding generic AI output[cite: 28, 49, 4288].
+    *   **Sustainable Scaling:** Allow creators to potentially double content output without increasing stress[cite: 70, 4289].
+    *   **Educational Effectiveness:** Help optimize content structure and clarity for better learning outcomes and viewer retention[cite: 70, 4290].
+*   **Key Feature Modules & Phased Rollout[cite: 48, 64, 65, 4291]:**
+    *   **Module 1: Creator Voice & Identity:** Creator DNA System[cite: 49], Personal Stories DB (Post-MVP)[cite: 49].
+    *   **Module 2: Strategic Content Intelligence:** Idea Validation (MVP)[cite: 51], Knowledge Gap Detector (Post-MVP)[cite: 51].
+    *   **Module 3: Research & Knowledge Management:** Deep Research Automation (PoC/MVP)[cite: 53], Factual Verification (PoC/MVP)[cite: 53], Audience Research (PoC/MVP)[cite: 53].
+    *   **Module 4: Content Production Pipeline:** Structure Optimization (PoC/MVP)[cite: 55], Script Coherence (PoC/MVP)[cite: 55], Concept Simplification (PoC/MVP)[cite: 55], Hook Development (PoC/MVP)[cite: 56], Script Generation (PoC/MVP)[cite: 56], Content Safety (PoC/MVP)[cite: 56].
+    *   **Module 5: Content Distribution & Monetization:** Repurposing, Monetization Strategy (Post-MVP)[cite: 58].
+    *   **Module 6: Creator Workflow System:** Streaming Save/Versioning (PoC basic save, MVP simplified versioning)[cite: 60], Feedback System (PoC/MVP)[cite: 60].
+    *   **Module 7: Platform Foundation:** Processing Infra, Data Security (PoC/MVP)[cite: 62].
+
+## 4. Roadmap & Current Status
+
+*   **Phased Approach:** PoC -> Early MVP -> MVP -> Post-MVP[cite: 4310].
+*   **Current Phase:** Proof of Concept (PoC)[cite: 4311].
+    *   **Goal:** Validate core research-to-script flow via conversational agent [cite: 4285, 4311]. Establish core architecture.
+    *   **Key PoC Deliverables:** Basic DNA capture, basic research/verification, basic script generation, minimal UI[cite: 64, 4312].
+*   **Next Phases:**
+    *   **Early MVP:** Cloud deployment, CI/CD, basic observability (logging, Sentry)[cite: 4313, 4397].
+    *   **MVP:** Reliable core value prop, enhanced AI quality, improved usability, full observability integration, initial customer readiness, real-time updates (WebSockets/SSE instead of polling)[cite: 4314, 4315, 4402, 4403].
+*   **Remaining Decisions / Active Design Areas:** Specific PaaS/DB/Redis provider selection[cite: 4393], detailed data ingestion pipelines[cite: 10, 4393], specific Haystack pipeline implementations[cite: 11, 4393], detailed observability config (dashboards/alerts)[cite: 16, 4393], advanced caching[cite: 13], **Workflow Orchestration Strategy (Post-MVP)**[cite: 4315, 4360].
+
+## 5. Project Structure (Monorepo)
+
+This project uses a monorepo to manage the frontend, backend, and configurations together[cite: 4316].
+
+```plaintext
+cp-prototype/
+├── .github/                  # CI/CD Automation (e.g., GitHub Actions)
+│   └── workflows/
+│       ├── ci-backend.yml
+│       └── ci-frontend.yml
+│       └── deploy-staging.yml # Example deployment workflow
+│       └── deploy-production.yml # Example deployment workflow
+├── .gitignore                # Files/folders for Git to ignore
+├── docker-compose.yml        # Local development environment setup
+├── .env.example              # --- KEY: Example env vars for LOCAL development ---
+├── .env.staging.example      # --- KEY: Example env vars for STAGING environment ---
+├── .env.production.example   # --- KEY: Example env vars for PRODUCTION (excluding secrets!) ---
+├── README.md                 # --- KEY: High-level overview, Arch decisions, Setup, How to Run ---
+│
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py           # FastAPI app definition, middleware, lifespan events
+│   │   ├── config.py         # --- KEY: Pydantic settings loading from ENV variables ---
+│   │   ├── logging_config.py # --- KEY ADDITION: Configure application logging (levels, formats) ---
+│   │   │
+│   │   ├── api/              # FastAPI specifics
+│   │   │   ├── __init__.py
+│   │   │   ├── dependencies.py # Auth checks, DB sessions per request
+│   │   │   ├── middleware/   # Custom middleware (e.g., request timing)
+│   │   │   │   └── ...
+│   │   │   ├── routers/      # Endpoint definitions, grouped by feature
+│   │   │   │   └── ...
+│   │   │   └── schemas.py    # API request/response data shapes (Pydantic)
+│   │   │
+│   │   ├── worker/           # SAQ Worker specifics
+│   │   │   ├── __init__.py
+│   │   │   └── settings.py   # SAQ Queue definition, task imports/discovery
+│   │   │
+│   │   ├── db/               # Database specifics
+│   │   │   ├── __init__.py
+│   │   │   ├── models.py     # SQLAlchemy table definitions
+│   │   │   ├── migrations/   # --- KEY: Alembic DB schema change scripts ---
+│   │   │   │   └── versions/
+│   │   │   │       └── ...py # Individual migration files generated by Alembic
+│   │   │   │   └── env.py    # Alembic runtime environment
+│   │   │   │   └── script.py.mako # Migration file template
+│   │   │   └── session.py    # DB connection/session logic
+│   │   │
+│   │   ├── shared/           # Code shared across backend features
+│   │   │   ├── __init__.py
+│   │   │   ├── clients/      # Clients for 3rd party APIs (YouTube, etc.)
+│   │   │   │   └── ...
+│   │   │   ├── constants.py  # Shared Enums and constant values
+│   │   │   ├── exceptions.py # Custom error classes
+│   │   │   ├── schemas.py    # Core internal data shapes (Pydantic)
+│   │   │   └── utils.py      # Common helper functions
+│   │   │
+│   │   ├── shared/prompts/   # --- KEY ADDITION: Shared versioned prompt templates ---
+│   │   │   └── {name}/{version}.j2
+│   │   │
+│   │   ├── shared/tools/     # --- KEY ADDITION: Shared tool definitions ---
+│   │   │   └── ...py
+│   │   │
+│   │   └── features/         # Business Logic / Domain Features
+│   │       ├── __init__.py
+│   │       │
+│   │       ├── chat/         # Chat feature logic
+│   │       │   ├── prompts/  # --- KEY ADDITION: Chat-specific versioned prompt templates ---
+│   │       │   │   └── {name}/{version}.j2
+│   │       │   ├── tools/    # --- KEY ADDITION: Chat-specific tool definitions ---
+│   │       │   │   └── ...py
+│   │       │   └── ...
+│   │       │
+│   │       ├── auth/         # Example user/auth feature logic
+│   │       │   └── ...
+│   │       │
+│   │       ├── voice_dna/    # Example Creator DNA feature logic
+│   │       │   ├── __init__.py
+│   │       │   ├── pipelines.py  # Haystack/AI pipeline definitions
+│   │       │   ├── service.py    # Core logic / Facade for this feature
+│   │       │   └── tasks.py      # Background tasks for this feature
+│   │       │
+│   │       └── # ... (research/, scripting/, etc.)
+│   │
+│   ├── tests/                # Backend automated tests
+│   │   ├── __init__.py
+│   │   └── # (Mirror app structure: api/, features/, shared/, etc.)
+│   │
+│   ├── models/               # --- KEY ADDITION (Optional): For downloaded AI models (if self-hosting later) ---
+│   │   └── .gitkeep
+│   │
+│   ├── Dockerfile            # Builds the common backend image (API + Worker code)
+│   ├── pyproject.toml        # Python dependencies (Poetry/PDM)
+│   ├── alembic.ini           # Alembic configuration file
+│   ├── ruff.toml             # --- KEY ADDITION: Example Linter/Formatter config ---
+│   └── README.md             # --- KEY: Backend setup, running locally, migration cmd, testing cmd ---
+│
+├── frontend/
+│   ├── src/                  # React source code
+│   │   ├── app.html
+│   │   ├── app.d.ts
+│   │   ├── app.css           # Global styles
+│   │   ├── hooks.server.js   # Server-side hooks (Note: This seems left over from SvelteKit, may need review)
+│   │   ├── hooks.client.js   # Client-side hooks (Note: This seems left over from SvelteKit, may need review)
+│   │   │
+│   │   ├── lib/              # Reusable frontend modules
+│   │   │   ├── components/   # UI Components
+│   │   │   ├── services/     # API Client (handles requests/responses/errors)
+│   │   │   ├── stores/       # Global state management (Note: React context/hooks preferred)
+│   │   │   ├── types/        # TypeScript definitions
+│   │   │   └── utils/        # Helper functions
+│   │   │
+│   │   └── routes/           # Application pages and layouts (Note: React Router or similar used)
+│   │       └── ...
+│   │
+│   ├── static/               # Static assets (favicon, images)
+│   ├── tests/                # Frontend automated tests
+│   ├── Dockerfile            # --- KEY: Builds PRODUCTION frontend image (often serves static files via Nginx) ---
+│   ├── package.json          # Node.js dependencies
+│   ├── vite.config.ts
+│   ├── .prettierrc.json      # --- KEY ADDITION: Example Formatter config ---
+│   ├── .eslintrc.cjs         # --- KEY ADDITION: Example Linter config ---
+│   └── README.md             # --- KEY: Frontend setup, running dev server, building for prod ---
+│
+├── e2e_tests/                # --- KEY ADDITION (Optional): End-to-end tests (e.g., Playwright/Cypress) ---
+│   └── .gitkeep
+│
+├── infra/                    # Optional: Infrastructure-as-Code (Terraform, Pulumi)
+│   └── .gitkeep
+│
+└── scripts/                  # Optional: Helper scripts (e.g., db reset, run linters)
+    └── .gitkeep
+```
+*   **`backend/`:** Python API (FastAPI) & Background Task Worker (SAQ)[cite: 4334]. See `backend/README.md`.
+*   **`frontend/`:** React User Interface. See `frontend/README.md`.
+*   **Root:** Shared configurations, local development setup (`docker-compose.yml`)[cite: 4317], CI/CD workflows.
+
+## 6. Architecture
+
+Architecture choices prioritize developer velocity (solopreneur focus)[cite: 4336], low operational overhead ("Low-Ops")[cite: 4338], cost-efficient scaling, and creator voice authenticity[cite: 4336].
+
+### 6.a. Core Technology Stack [cite: 4337, 4361]
+
+*   Backend Language/Framework: Python / FastAPI
+*   AI Orchestration: Haystack Framework (v2+)
+*   Frontend Framework: React
+*   Database: Managed PostgreSQL + `pgvector` extension for vector embeddings
+*   DB Migrations: Alembic (configured for automated database schema management)
+*   Background Tasks: SAQ (Simple Async Queue) library
+*   Task Queue Broker: Managed Redis
+*   Hosting: Container-based PaaS
+*   LLM Interaction (PoC/MVP): Via managed Haystack
+
+### 6.b. Guiding Principles [cite: 4338, 4339, 4340]
+
+*   Minimize direct infrastructure operation ("Low-Ops").
+*   Minimize vendor lock-in.
+*   Prioritize creator voice authenticity.
+*   Async-first design.
+*   Modularity & Rapid Iteration.
+*   Design for Idempotency (especially background tasks).
+
+### 6.c. Key Patterns [cite: 4341, 4342, 4343]
+
+*   Async-first design.
+*   Dependency Injection.
+*   Single Backend Docker Image (API + Worker).
+*   Conversational Agent primary interface.
+
+### 6.d. API vs. Worker Design Strategy [cite: 4344]
+
+*   **API (FastAPI):** Handles synchronous requests, validation, auth, simple DB ops, triggers background tasks[cite: 4346]. For PoC, provides polling endpoints for job status[cite: 4346, 4351].
+*   **Worker (SAQ):** Executes long-running (>500ms), I/O-bound (LLM calls), or retryable tasks[cite: 4347]. Updates status/results in DB. Designed for idempotency[cite: 4348].
+*   **PoC Communication:** API enqueues job -> returns `job_id`[cite: 4349]. Worker updates status in `background_jobs` table[cite: 4350]. Client polls API for status[cite: 4351]. (Polling replaced by WebSockets/SSE in MVP [cite: 4352, 4358]).
+*   **MVP+ Challenges:** Real-time updates, Workflow Orchestration, Advanced Error Handling[cite: 4358, 4359, 4360, 4361].
+
+### 6.e. Data Layer Details
+
+The database schema is designed to support the application's features from PoC through MVP, balancing normalization with practical needs for AI processing and retrieval.
+
+*   **Core Entities:** `users`, `videos` and `user_videos`.
+*   **Supporting Tables:** `background_jobs` (tracks SAQ tasks, includes `initiating_job_id`), `feedback` (polymorphic link to various entities), `evaluation_results` (simplified, polymorphic storage for AI/user evaluations), `educational_frameworks`, join tables.
+*   **Vector Data Strategy:** Uses `pgvector` extension within PostgreSQL.
+
+### 6.f. Architecture Considerations & Technical Debt
+
+*   **Workflow Orchestration:** The current SAQ + `background_jobs` approach is sufficient for PoC/early MVP but does **not** solve complex, multi-step workflow orchestration[cite: 4360]. This remains the most significant piece of **deferred technical debt**, requiring a dedicated solution (e.g., Temporal, Prefect) Post-MVP.
+
+### 6.g. Observability Strategy (MVP Target)
+
+*   Instrumentation: OpenTelemetry SDK.
+*   Platforms: Grafana Cloud (Logs, Metrics, Traces - Infra/System), Sentry (Errors, APM - App Code), PostHog (Product Analytics - User/Product).
+
+### 6.h. Prompt and Tool Versioning
+
+To support experimentation and controlled rollout of AI behavior changes, prompt templates and tool definitions are versioned and managed via a flexible configuration system.
+
+*   **Storage:** Prompt templates (`.j2` files) and tool definitions (`.py` files) are stored directly in the Git repository under `backend/app/features/.../` and `backend/app/shared/` directories, following a `{name}/{version}.j2` or `{name}.py` pattern. This leverages Git for version control.
+*   **Activation:** The specific version of a prompt or the set of tools used by a pipeline is determined at runtime based on a "pipeline tag".
+*   **Pipeline Tags:**
+    *   **Default:** A default pipeline tag (e.g., "stable", "experimental") is configured via environment variables (`DEFAULT_CHAT_PIPELINE_TAG`, etc.).
+    *   **Override:** Individual background jobs can specify an optional `pipeline_tag` in the `background_jobs` database table to override the default for that specific task.
+*   **Configuration File (`pipeline-tags.yaml`):** A YAML file (path configured via `PIPELINE_TAGS_CONFIG_PATH` ENV VAR) provides a mapping from pipeline tags to specific prompt versions for different pipeline types and logical prompt names. This allows defining which version of a 'system' or 'main_chat' prompt corresponds to a 'stable' or 'experimental' tag.
+*   **Fallback:** If a specific prompt version is not defined for the active pipeline tag in `pipeline-tags.yaml`, the system falls back to a default version specified by the `DEFAULT_PROMPT_VERSION` ENV VAR.
+*   **`PromptService`:** This service centralizes the logic for resolving the correct prompt version based on the override tag (if present), default tag, `pipeline-tags.yaml` lookup, and the fallback version. It is also responsible for reading the prompt file content from the file system and includes caching.
+*   **Startup Validation:** During application startup (via the lifespan event handler), the system validates the `pipeline-tags.yaml` file for parsing errors and checks for the existence of all required prompt files for the *default* pipeline tags defined in the environment variables. Missing files or invalid YAML will prevent the application from starting.
+
+This system provides a robust mechanism for managing and deploying different versions of AI prompts and tools alongside application code, enabling controlled experimentation and A/B testing of AI behavior.
+
+### 6.i. Detailed Architecture Overview
+
+The application follows a monorepo structure, housing both the backend and frontend components. It is designed as a multi-component system orchestrated using Docker and Nginx as a reverse proxy.
+
+#### Primary Components and Functions
+
+1.  **Frontend:**
+    *   **Function:** Provides the user interface for interacting with the application. Currently focuses on a conversational chat interface, authentication flows, and basic profile management.
+    *   **Technologies:** React 19.1, Mantine 7.17.4 (UI components), SuperTokens Auth React SDK (authentication), Vite (build tool/dev server).
+    *   **Communication:** Communicates with the Backend API via HTTP requests, managed by a fetch-based API service that relies on browser cookie handling for sessions. Interacts directly with the SuperTokens Managed Service for authentication state management via the SDK.
+
+2.  **Backend API (FastAPI):**
+    *   **Function:** Acts as the main entry point for synchronous requests from the frontend. It handles user authentication, session management, basic data retrieval/storage, and triggers asynchronous tasks via the job queue.
+    *   **Technologies:** Python 3.11+, FastAPI 0.115.0+, SQLAlchemy 2.0+ (ORM), SuperTokens Python SDK (authentication), Pydantic (data validation), `uv` (dependency management), SAQ (for enqueueing jobs).
+    *   **Key Features Hosted/Initiated Here:**
+        *   **Authentication (`backend/app/features/auth/`):** Manages user sign-up, sign-in, and session verification using the SuperTokens Python SDK, linking SuperTokens users to local database records. Includes dependencies (`get_required_user_from_session`) to protect API routes.
+        *   **Chat API Endpoints (`backend/app/api/routers/chat.py`):** Exposes endpoints for `/interact` (handling new user messages), `/history` (retrieving previous messages for a session), and `/greeting` (generating a dynamic initial message). The `/interact` endpoint receives the user's message and session ID, validates the request, and then enqueues a corresponding chat processing job with the SAQ worker.
+        *   **User Management (`backend/app/api/routers/user.py`):** Provides endpoints for retrieving user profile information.
+        *   **Health Checks (`backend/app/api/routers/health.py`):** Provides endpoints to verify service health and configuration.
+    *   **Communication:** Receives HTTP requests routed by Nginx. Interacts with the PostgreSQL database via SQLAlchemy for user data, chat history retrieval, and job status updates. Sends jobs to the Redis queue used by the Backend Worker via SAQ. Communicates with the SuperTokens Managed Service for authentication validation and user linking.
+
+3.  **Backend Worker (SAQ):**
+    *   **Function:** Processes long-running, resource-intensive, or I/O-bound tasks asynchronously, decoupling them from the synchronous API request flow. It is the primary execution environment for the AI-driven chat logic.
+    *   **Technologies:** Python 3.11+, SAQ 0.22.5+ (background task queue consumer), SQLAlchemy 2.0+ (ORM), Haystack v2+ (AI orchestration), `uv`.
+    *   **Key Features Implemented/Executed Here:**
+        *   **Chat Processing (`backend/app/features/chat/chat_pipeline.py`):** Contains the definition and execution logic for the Haystack Pipeline that handles user messages. This pipeline is designed to process incoming messages, manage conversational state, and generate responses.
+        *   **AI Orchestration (`backend/app/ai/`):** Houses the Haystack components and pipeline definitions. The chat pipeline specifically utilizes a Haystack `Agent`. The Agent is configured with an LLM generator and potentially a set of `Tools` that the Agent can decide to use based on the user's query.
+        *   **Prompt Management (`backend/app/shared/prompts/`, `backend/app/features/.../prompts/`):** The chat pipeline (or components within it, like the Agent) utilizes the PromptService to fetch appropriate prompt templates (e.g., the system prompt, potentially specific prompts for tools or tasks) based on the configured pipeline tag and versioning strategy.
+        *   **Tool Implementation (`backend/app/shared/tools/`, `backend/app/features/.../tools.py`):** Contains the implementations of specific tools that the Haystack Agent can call upon. While the specific tools for features like Creator DNA or Research are under development, the architecture supports the Agent invoking these tools during the chat flow.
+        *   **Background Processing Tasks:** Executes specific tasks like the chat pipeline, and is the intended environment for future tasks such as data ingestion (e.g., YouTube ingestion).
+    *   **Communication:** Polls the Redis queue for new jobs. Interacts with the PostgreSQL database via SQLAlchemy to retrieve chat history (for context), store new chat messages, and update job status. Uses Haystack to orchestrate interactions with LLMs.
+
+4.  **Database (PostgreSQL + pgvector):**
+    *   **Function:** Stores both relational data (user information, chat history, project metadata, background job status) and vector embeddings for Retrieval-Augmented Generation (RAG). The chat history for each user/session is persisted here, providing conversational memory.
+    *   **Technologies:** PostgreSQL 15+, pgvector extension (vector storage and indexing), Alembic (database migrations).
+    *   **Communication:** Accessed by the Backend API (for history retrieval) and Backend Worker (for history retrieval, new message storage, job status updates) via SQLAlchemy using standard database protocols.
+
+5.  **Redis:**
+    *   **Function:** Serves as the message broker for the SAQ background task queue, facilitating communication between the Backend API (enqueueing chat processing tasks) and the Backend Worker (processing chat tasks).
+    *   **Technologies:** Redis.
+    *   **Communication:** Accessed by the Backend API and Backend Worker using the Redis protocol.
+
+6.  **Nginx Reverse Proxy:**
+    *   **Function:** Acts as the single entry point, routing incoming requests to the appropriate internal service (Frontend or Backend API). Handles SSL termination (in deployment) and manages specific CORS preflight requests.
+    *   **Technologies:** Nginx.
+    *   **Communication:** Routes HTTP traffic between the user's browser and the internal Docker services.
+
+7.  **SuperTokens Managed Service:**
+    *   **Function:** Provides core user authentication management (sign-up, sign-in, session handling).
+    *   **Technologies:** SuperTokens Managed Service.
+    *   **Communication:** Interacts with the Frontend SDK for UI flows and the Backend SDK for session verification and user linking.
+
+8.  **External LLMs:**
+    *   **Function:** Provide large language model capabilities for tasks like text generation, summarization, etc., orchestrated by Haystack for the chat responses.
+    *   **Technologies:** Various LLM providers (e.g., OpenAI, Anthropic) accessed via Haystack.
+    *   **Communication:** Accessed by Haystack via their respective APIs.
+
+#### Detailed Chat Feature Flow:
+
+1.  **User Input:** The user sends a message via the Frontend chat interface.
+2.  **API Request:** The Frontend's `apiService` sends an HTTP POST request to the Backend API's `/api/v1/chat/interact` endpoint, including the user's message and session ID.
+3.  **API Processing:**
+    *   The FastAPI endpoint receives the request.
+    *   Authentication dependencies (`get_required_user_from_session`) verify the user's session.
+    *   The request data is validated using Pydantic schemas.
+    *   The Backend API uses SAQ to enqueue a new job named `process_chat_message` (or similar) into the Redis queue. This job includes necessary context such as the user ID, session ID, and the user's message content.
+    *   The API immediately returns a response to the Frontend, likely indicating that the message was received and a job was queued (e.g., returning a job ID).
+4.  **Worker Processing:**
+    *   The Backend Worker, continuously polling the Redis queue, picks up the `process_chat_message` job.
+    *   The worker function retrieves the job details (user ID, session ID, message content).
+    *   It uses SQLAlchemy to interact with the PostgreSQL database:
+        *   Retrieving previous chat messages for the given session ID to provide conversation history to the LLM.
+        *   Storing the user's incoming message in the database.
+        *   Storing the AI's response in the PostgreSQL database, linking it to the same session ID.
+        *   Updating the job status in Redis and PostgreSQL (e.g., to 'completed').
+    *   The worker initializes and runs the Haystack Pipeline defined in `backend/app/features/chat/chat_pipeline.py`.
+    *   Inside the pipeline, the configured Haystack `Agent` takes the user's message and chat history as input.
+    *   The Agent uses the PromptService to fetch the appropriate system prompt and potentially other prompts based on the configured pipeline tag.
+    *   Based on the prompt, input, and available tools, the Agent decides the next step: either directly generate a response using the LLM or invoke one or more configured Tools.
+    *   If a Tool is invoked, the worker executes the Python function corresponding to the tool, which might perform actions like data retrieval (potentially from PostgreSQL via RAG), external API calls (though none are fully implemented for chat yet), etc. The tool's result is returned to the Agent.
+    *   The Agent continues its process (potentially invoking more tools or generating a final response) based on the tool outputs and the conversation goal.
+    *   Once the Agent determines the final response, the worker receives this response.
+5.  **Frontend Update:** The Frontend, which is likely polling a status endpoint or will eventually use WebSockets/SSE (as per the plan in `productContext.md`), detects that the job for the sent message is complete. It then retrieves the updated chat history (including the AI's response) from the Backend API's `/api/v1/chat/history` endpoint and updates the UI.
+
+#### Architectural Diagram:
+
+```mermaid
+graph TD
+    User --> Nginx
+    Nginx --> Frontend
+    Nginx --> BackendAPI
+    Frontend --> SuperTokensMS
+    BackendAPI --> PostgreSQL
+    BackendAPI --> Redis
+    BackendAPI --> SuperTokensMS
+    BackendWorker --> Redis
+    BackendWorker --> PostgreSQL
+    BackendWorker --> Haystack
+    Haystack --> ExternalLLMs
+
+    subgraph User Interface
+        Frontend
+    end
+
+    subgraph Backend Services
+        BackendAPI[Backend API (FastAPI)]
+        BackendWorker[Backend Worker (SAQ)]
+        Haystack[AI Orchestration (Haystack)]
+    end
+
+    subgraph Data Stores
+        PostgreSQL[PostgreSQL + pgvector]
+        Redis[Redis]
+    end
+
+    subgraph Infrastructure
+        Nginx[Nginx Reverse Proxy]
+    end
+
+    subgraph External Services
+        SuperTokensMS[SuperTokens Managed Service]
+        ExternalLLMs[External LLMs]
+    end
+
+    classDef default fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef infrastructure fill:#ccf,stroke:#333,stroke-width:2px;
+    classDef datastore fill:#cfc,stroke:#333,stroke-width:2px;
+    classDef external fill:#ffc,stroke:#333,stroke-width:2px;
+
+    class Nginx infrastructure;
+    class PostgreSQL,Redis datastore;
+    class SuperTokensMS,ExternalLLMs external;
+
+    linkStyle 0 stroke:#555,stroke-width:1.5px,color:#555;
+    linkStyle 1 stroke:#555,stroke-width:1.5px,color:#555;
+    linkStyle 2 stroke:#555,stroke-width:1.5px,color:#555;
+    linkStyle 3 stroke:#555,stroke-width:1.5px,color:#555;
+    linkStyle 4 stroke:#555,stroke-width:1.5px,color:#555;
+    linkStyle 5 stroke:#555,stroke-width:1.5px,color:#555;
+    linkStyle 6 stroke:#555,stroke-width:1.5px,color:#555;
+    linkStyle 7 stroke:#555,stroke-width:1.5px,color:#555;
+    linkStyle 8 stroke:#555,stroke-width:1.5px,color:#555;
+    linkStyle 9 stroke:#555,stroke-width:1.5px,color:#555;
+    linkStyle 10 stroke:#555,stroke-width:1.5px,color:#555;
+    linkStyle 11 stroke:#555,stroke-width:1.5px,color:#555;
+```
